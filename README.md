@@ -25,9 +25,11 @@ Seul le temps **actif** est compté : après quelques minutes sans souris ni cla
 
 ## Installation
 
-1. Télécharge `TempsPC.zip` depuis la page **Releases** de ce dépôt.
+1. **[Télécharge TempsPC.zip](https://github.com/vincentschoebrechts-beep/temps-pc/raw/main/telechargement/TempsPC.zip)** (Windows 10/11, 64 bits, environ 10 Mo).
 2. Clic droit sur le zip → **Extraire tout…**, puis place le dossier `TempsPC` là où il restera (par ex. Documents).
 3. Double-clique sur `TempsPC.exe`.
+
+Rien d'autre à installer : Python est inclus dans l'exe.
 
 L'exe n'est pas signé : Windows peut afficher « Windows a protégé votre ordinateur ». Clique sur **Informations complémentaires**, puis **Exécuter quand même**.
 
