@@ -13,7 +13,9 @@ Python 3 doit etre installe : https://www.python.org/downloads/
   chaque minute. Vert = actif, gris = en pause (icone et graphiques).
 - Fermer la fenetre la reduit dans la barre des taches : le suivi continue.
   Le bouton « Quitter » arrete vraiment l'application.
-- Les donnees restent sur ce PC (Windows : %APPDATA%\\TempsPC\\donnees.json).
+- Historique : histogramme des 12 derniers mois et du mois jour par jour.
+- Les donnees restent sur ce PC (Windows : %APPDATA%\\TempsPC\\donnees.json),
+  avec une copie de securite automatique chaque jour (dossier « sauvegardes »).
 """
 from __future__ import annotations
 
@@ -33,10 +35,12 @@ from collections import deque
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 
+import calendar
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
 APP_NOM = "Temps PC"
+APP_VERSION = "1.1"
 TICK_MS = 2000        # une mesure toutes les 2 secondes
 SAUVEGARDE_S = 30     # ecriture sur le disque toutes les 30 secondes
 ECART_MAX_S = 30      # trou plus long entre deux mesures = veille du PC : non compte
@@ -46,6 +50,9 @@ MAC = sys.platform == "darwin"
 
 JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 JOURS_COURTS = ["lun", "mar", "mer", "jeu", "ven", "sam", "dim"]
+MOIS_COURTS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.",
+               "oct.", "nov.", "déc."]
+SAUVEGARDES_GARDEES = 14
 MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet",
         "août", "septembre", "octobre", "novembre", "décembre"]
 
@@ -245,6 +252,16 @@ REGLAGES_DEFAUT = {
 }
 
 
+def copier_fichier(source: str, cible: str) -> None:
+    """Copie simple et sure (pas de shutil.copy2 : CopyFile2 absent de certains systemes)."""
+    tmp = cible + ".tmp"
+    with open(source, "rb") as fs, open(tmp, "wb") as fc:
+        fc.write(fs.read())
+        fc.flush()
+        os.fsync(fc.fileno())
+    os.replace(tmp, cible)
+
+
 class Donnees:
     def __init__(self, dossier: str) -> None:
         self.dossier = dossier
@@ -252,7 +269,10 @@ class Donnees:
         self.avertissement: str | None = None
         self.jours: dict[str, dict] = {}
         self.reglages = dict(REGLAGES_DEFAUT)
+        self._sauvegarde_faite: str | None = None
         self._charger()
+        if not self.avertissement:
+            self.sauvegarde_du_jour()
 
     def _charger(self) -> None:
         if not os.path.exists(self.chemin):
@@ -277,6 +297,27 @@ class Donnees:
             self.avertissement = ("Le fichier de données n'a pas pu être lu "
                                   f"({e}).\n\nIl a été mis de côté ici :\n{copie}")
 
+    def sauvegarde_du_jour(self) -> None:
+        """Copie de securite de donnees.json, avant toute ecriture : une par jour (les
+        14 dernieres sont gardees) + une copie permanente a la 1re ouverture d'une version."""
+        auj = date.today().isoformat()
+        if self._sauvegarde_faite == auj or not os.path.exists(self.chemin):
+            return
+        self._sauvegarde_faite = auj
+        dossier = os.path.join(self.dossier, "sauvegardes")
+        try:
+            os.makedirs(dossier, exist_ok=True)
+            for nom in (f"donnees-{auj}.json", f"donnees-avant-version-{APP_VERSION}.json"):
+                cible = os.path.join(dossier, nom)
+                if not os.path.exists(cible):
+                    copier_fichier(self.chemin, cible)
+            quotidiennes = sorted(n for n in os.listdir(dossier)
+                                  if re.fullmatch(r"donnees-\d{4}-\d\d-\d\d\.json", n))
+            for nom in quotidiennes[:-SAUVEGARDES_GARDEES]:
+                os.remove(os.path.join(dossier, nom))
+        except OSError:
+            pass
+
     def jour(self, cle: str) -> dict:
         return self.jours.setdefault(cle, {"heures": [0.0] * 24, "premiere": None, "derniere": None})
 
@@ -286,6 +327,7 @@ class Donnees:
 
     def enregistrer(self) -> None:
         os.makedirs(self.dossier, exist_ok=True)
+        self.sauvegarde_du_jour()
         contenu = {
             "application": APP_NOM,
             "version": 1,
@@ -511,6 +553,21 @@ class Barre:
     etiquette: str | None = None
 
 
+def echelle_heures(max_sec: float, graduations_max: int = 4) -> tuple[float, list[tuple[float, str]]]:
+    """Haut de l'axe et graduations pour des durees en heures."""
+    hmax = max(1.0, max_sec / 3600 + 0.08)
+    for pas in (1, 2, 4, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000):
+        if math.ceil(hmax / pas) <= graduations_max:
+            break
+    n = max(1, math.ceil(hmax / pas))
+    return n * pas * 3600.0, [(k * pas * 3600.0, f"{k * pas} h") for k in range(1, n + 1)]
+
+
+def mois_decale(an: int, mois: int, delta: int) -> tuple[int, int]:
+    n = an * 12 + (mois - 1) + delta
+    return n // 12, n % 12 + 1
+
+
 def rectangle_arrondi_haut(c: tk.Canvas, x0, y0, x1, y1, r, **kw):
     r = min(r, (x1 - x0) / 2, (y1 - y0))
     if r < 1:
@@ -521,10 +578,11 @@ def rectangle_arrondi_haut(c: tk.Canvas, x0, y0, x1, y1, r, **kw):
 
 
 class Graphique(tk.Canvas):
-    def __init__(self, master, app: "Application", hauteur: int, ratio: float) -> None:
+    def __init__(self, master, app: "Application", hauteur: int, ratio: float, au_clic=None) -> None:
         super().__init__(master, height=app.px(hauteur), bg=app.th["fond"],
                          highlightthickness=0, bd=0)
         self.app = app
+        self.au_clic = au_clic
         self.ratio = ratio
         self.barres: list[Barre] = []
         self.ymax = 3600.0
@@ -535,6 +593,16 @@ class Graphique(tk.Canvas):
         self.bind("<Configure>", lambda e: self.dessiner())
         self.bind("<Motion>", self._bouge)
         self.bind("<Leave>", self._sort)
+        if au_clic:
+            self.bind("<Button-1>", self._clic)
+
+    def _index(self, x: float) -> int | None:
+        return next((k for k, (xa, xb, _) in enumerate(self.zones) if xa <= x < xb), None)
+
+    def _clic(self, e) -> None:
+        i = self._index(e.x)
+        if i is not None:
+            self.au_clic(i)
 
     def maj(self, barres, ymax, graduations) -> None:
         etat = (barres, ymax, graduations)
@@ -582,8 +650,10 @@ class Graphique(tk.Canvas):
         self._bulle()
 
     def _bouge(self, e) -> None:
-        i = next((k for k, (xa, xb, _) in enumerate(self.zones) if xa <= e.x < xb), None)
+        i = self._index(e.x)
         if i != self.survol:
+            if self.au_clic:
+                self.config(cursor="hand2" if i is not None else "")
             self.survol = i
             self._bulle()
 
@@ -620,10 +690,17 @@ class Bouton(tk.Label):
                          font=(POLICE, 10), padx=app.px(14), pady=app.px(6),
                          cursor="hand2", takefocus=1)
         self._th = th
-        self.bind("<Enter>", lambda e: self.config(bg=th["bouton_survol"]))
+        self.actif = True
+        self.bind("<Enter>", lambda e: self.config(bg=th["bouton_survol"]) if self.actif else None)
         self.bind("<Leave>", lambda e: self.config(bg=th["bouton"]))
         for ev in ("<Button-1>", "<Return>", "<space>"):
-            self.bind(ev, lambda e: commande())
+            self.bind(ev, lambda e: commande() if self.actif else None)
+
+    def activer(self, oui: bool) -> None:
+        if oui != self.actif:
+            self.actif = oui
+            self.config(fg=self._th["texte"] if oui else self._th["discret"],
+                        cursor="hand2" if oui else "", bg=self._th["bouton"])
 
 
 # Police pixel (7 lignes de haut) pour ecrire le temps dans l'icone
@@ -734,11 +811,11 @@ class Application:
         th = self.th
         root.title(APP_NOM)
         root.configure(bg=th["fond"])
-        root.geometry(f"{self.px(520)}x{self.px(680)}")
-        root.minsize(self.px(440), self.px(640))
+        self._dimensionner(root, 520, 680, 440, 640)
         root.protocol("WM_DELETE_WINDOW", self.reduire)
         self._icones: list[tk.PhotoImage] = []
         self._etat_icone = None
+        self.historique: FenetreHistorique | None = None
         self._styles_ttk()
         self._construire()
         if THEMES["sombre"] is th:
@@ -760,6 +837,13 @@ class Application:
 
     def px(self, n: float) -> int:
         return int(round(n * self.echelle))
+
+    def _dimensionner(self, fen: tk.Misc, l: int, h: int, lmin: int, hmin: int) -> None:
+        """Taille voulue, sans depasser l'ecran (petits portables, zoom Windows a 125-150 %)."""
+        w = min(self.px(l), fen.winfo_screenwidth() - self.px(40))
+        hh = min(self.px(h), fen.winfo_screenheight() - self.px(90))
+        fen.geometry(f"{w}x{hh}")
+        fen.minsize(min(self.px(lmin), w), min(self.px(hmin), hh))
 
     # ---- construction -------------------------------------------------------
     def _styles_ttk(self) -> None:
@@ -933,15 +1017,17 @@ class Application:
                 v, "Auj." if k == 0 else f"{JOURS_COURTS[jr.weekday()]} {jr.day}",
                 f"{nom} : {duree(v)}", couleur if k == 0 else couleur_passee,
                 fort=(k == 0), etiquette=duree_courte(v) if k == 0 else None))
-        heures_max = max(1, math.ceil(max(valeurs) / 3600 + 0.08))
-        pas = 1 if heures_max <= 4 else 2 if heures_max <= 8 else 4
-        heures_max = math.ceil(heures_max / pas) * pas
-        grads = [(hh * 3600.0, f"{hh} h") for hh in range(pas, heures_max + 1, pas)]
-        self.graph_jours.maj(barres_j, heures_max * 3600.0, grads)
+        self.graph_jours.maj(barres_j, *echelle_heures(max(valeurs)))
 
         note = self.erreur_sauvegarde or (
             "Fermer la fenêtre la réduit, le suivi continue. « Quitter » arrête tout.")
         self.lbl_note.config(text=note, fg="#d03b3b" if self.erreur_sauvegarde else th["discret"])
+
+        if self.historique:
+            try:
+                self.historique.maj()
+            except tk.TclError:  # fenetre fermee entre-temps
+                self.historique = None
 
     def _maj_icone(self, total: float) -> None:
         """Icone de la barre des taches + titre : le temps du jour, mis a jour chaque minute."""
@@ -1015,46 +1101,11 @@ class Application:
         return f
 
     def ouvrir_historique(self) -> None:
-        th, px = self.th, self.px
-        f = self._fenetre(f"{APP_NOM} – Historique", 560, 480)
-        cadre = tk.Frame(f, bg=th["fond"], padx=px(18), pady=px(16))
-        cadre.pack(fill="both", expand=True)
-
-        jours = sorted(((k, v) for k, v in self.d.jours.items() if sum(v["heures"]) >= 1), reverse=True)
-        totaux = [sum(v["heures"]) for _, v in jours]
-        if totaux:
-            resume = (f"{len(totaux)} jour{'s' if len(totaux) > 1 else ''} enregistré"
-                      f"{'s' if len(totaux) > 1 else ''} · moyenne {duree(sum(totaux) / len(totaux))} "
-                      f"par jour · total {duree(sum(totaux))}")
-        else:
-            resume = "Aucune donnée pour l'instant."
-        tk.Label(cadre, text=resume, bg=th["fond"], fg=th["texte2"], font=(POLICE, 10),
-                 anchor="w").pack(fill="x", pady=(0, px(10)))
-
-        bas = tk.Frame(cadre, bg=th["fond"])
-        bas.pack(side="bottom", fill="x", pady=(px(12), 0))
-        Bouton(bas, "Exporter en CSV (Excel)…", lambda: self._exporter(f, jours), self).pack(side="left")
-        Bouton(bas, "Fermer", f.destroy, self).pack(side="right")
-
-        zone = tk.Frame(cadre, bg=th["fond"])
-        zone.pack(fill="both", expand=True)
-        cols = ("date", "jour", "temps", "premiere", "derniere")
-        arbre = ttk.Treeview(zone, columns=cols, show="headings", selectmode="browse")
-        for col, titre, larg, anc in (("date", "Date", 100, "w"), ("jour", "Jour", 90, "w"),
-                                      ("temps", "Temps actif", 110, "e"),
-                                      ("premiere", "Début", 70, "center"),
-                                      ("derniere", "Fin", 70, "center")):
-            arbre.heading(col, text=titre, anchor=anc)
-            arbre.column(col, width=px(larg), anchor=anc, stretch=True)
-        defil = ttk.Scrollbar(zone, orient="vertical", command=arbre.yview)
-        arbre.configure(yscrollcommand=defil.set)
-        defil.pack(side="right", fill="y")
-        arbre.pack(side="left", fill="both", expand=True)
-        for k, v in jours:
-            dt = date.fromisoformat(k)
-            arbre.insert("", "end", values=(dt.strftime("%d/%m/%Y"), JOURS[dt.weekday()].capitalize(),
-                                            duree(sum(v["heures"])), v.get("premiere") or "–",
-                                            v.get("derniere") or "–"))
+        if self.historique and self.historique.f.winfo_exists():
+            self.historique.f.deiconify()
+            self.historique.f.lift()
+            return
+        self.historique = FenetreHistorique(self)
 
     def _exporter(self, parent, jours) -> None:
         chemin = filedialog.asksaveasfilename(parent=parent, title="Exporter l'historique",
@@ -1153,6 +1204,227 @@ class Application:
         Bouton(bas, "Ouvrir le dossier", ouvrir, self).pack(side="left")
         Bouton(bas, "Enregistrer", valider, self).pack(side="right")
         Bouton(bas, "Annuler", f.destroy, self).pack(side="right", padx=(0, px(8)))
+
+
+# --------------------------------------------------------------------------
+# Fenetre Historique : 12 derniers mois + mois choisi jour par jour
+# --------------------------------------------------------------------------
+class FenetreHistorique:
+    def __init__(self, app: Application) -> None:
+        self.app = app
+        th, px = app.th, app.px
+        auj = date.today()
+        self.mois = (auj.year, auj.month)
+        self.bornes = (self.mois, self.mois)
+        self.mois_affiches: list[tuple[int, int]] = []
+        self._sig_table = None
+
+        self.f = f = app._fenetre(f"{APP_NOM} – Historique")
+        app._dimensionner(f, 600, 780, 500, 560)
+        f.bind("<Destroy>", self._ferme, add="+")
+        f.bind("<Left>", lambda e: self.changer(-1))
+        f.bind("<Right>", lambda e: self.changer(1))
+        petit = f.winfo_screenheight() < px(860)
+
+        cadre = tk.Frame(f, bg=th["fond"], padx=px(20), pady=px(14))
+        cadre.pack(fill="both", expand=True)
+        self.lbl_resume = tk.Label(cadre, bg=th["fond"], fg=th["texte2"], font=(POLICE, 10), anchor="w")
+        self.lbl_resume.pack(fill="x")
+
+        app._titre(cadre, "Les 12 derniers mois", "clique sur un mois pour le détail")
+        self.g_mois = Graphique(cadre, app, 112 if petit else 132, 0.56, au_clic=self._clic_mois)
+        self.g_mois.pack(fill="x")
+
+        nav = tk.Frame(cadre, bg=th["fond"])
+        nav.pack(fill="x", pady=(px(14), 0))
+        self.b_prec = Bouton(nav, "‹", lambda: self.changer(-1), app)
+        self.b_prec.pack(side="left")
+        self.lbl_mois = tk.Label(nav, bg=th["fond"], fg=th["texte"], font=(POLICE, 13, "bold"))
+        self.lbl_mois.pack(side="left", padx=px(12))
+        self.b_suiv = Bouton(nav, "›", lambda: self.changer(1), app)
+        self.b_suiv.pack(side="left")
+        self.lbl_detail = tk.Label(cadre, bg=th["fond"], fg=th["texte2"], font=(POLICE, 10),
+                                   anchor="w", justify="left")
+        self.lbl_detail.pack(fill="x", pady=(px(6), 0))
+        cadre.bind("<Configure>", lambda e: self.lbl_detail.config(wraplength=max(200, e.width - px(40))),
+                   add="+")
+
+        app._titre(cadre, "Jour par jour", "temps actif")
+        self.g_jours = Graphique(cadre, app, 118 if petit else 150, 0.62, au_clic=self._clic_jour)
+        self.g_jours.pack(fill="x")
+
+        bas = tk.Frame(cadre, bg=th["fond"])
+        bas.pack(side="bottom", fill="x", pady=(px(12), 0))
+        Bouton(bas, "Exporter tout en CSV (Excel)…", self._exporter, app).pack(side="left")
+        Bouton(bas, "Fermer", f.destroy, app).pack(side="right")
+
+        zone = tk.Frame(cadre, bg=th["fond"])
+        zone.pack(fill="both", expand=True, pady=(px(14), 0))
+        cols = ("date", "jour", "temps", "premiere", "derniere")
+        self.arbre = ttk.Treeview(zone, columns=cols, show="headings", selectmode="browse", height=4)
+        for col, titre, larg, anc in (("date", "Date", 100, "w"), ("jour", "Jour", 90, "w"),
+                                      ("temps", "Temps actif", 110, "e"),
+                                      ("premiere", "Début", 70, "center"),
+                                      ("derniere", "Fin", 70, "center")):
+            self.arbre.heading(col, text=titre, anchor=anc)
+            self.arbre.column(col, width=px(larg), anchor=anc, stretch=True)
+        defil = ttk.Scrollbar(zone, orient="vertical", command=self.arbre.yview)
+        self.arbre.configure(yscrollcommand=defil.set)
+        defil.pack(side="right", fill="y")
+        self.arbre.pack(side="left", fill="both", expand=True)
+        self.maj()
+        f.focus_set()
+
+    # ---- donnees ------------------------------------------------------------
+    def _par_mois(self) -> dict[tuple[int, int], list]:
+        """{(annee, mois): [temps total, nombre de jours utilises]}"""
+        res: dict[tuple[int, int], list] = {}
+        for cle, j in self.app.d.jours.items():
+            t = sum(j["heures"])
+            if t < 1:
+                continue
+            dt = date.fromisoformat(cle)
+            m = res.setdefault((dt.year, dt.month), [0.0, 0])
+            m[0] += t
+            if t >= 60:
+                m[1] += 1
+        return res
+
+    def maj(self) -> None:
+        app, th = self.app, self.app.th
+        jours = app.d.jours
+        etat = "actif" if app.compteur.actif else "pause"
+        couleur, couleur_legere = th[f"barre_{etat}"], th[f"passee_{etat}"]
+        if etat != getattr(self, "_etat_style", None):
+            self._etat_style = etat
+            ttk.Style(self.f).map("Treeview", background=[("selected", couleur)],
+                                  foreground=[("selected", "#ffffff")])
+        auj = date.today()
+        courant = (auj.year, auj.month)
+        par_mois = self._par_mois()
+        premier = min([courant, *par_mois])
+        dernier = max([courant, *par_mois])
+        self.bornes = (premier, dernier)
+        self.mois = min(max(self.mois, premier), dernier)
+        sel = self.mois
+        a, m = sel
+
+        # Resume global
+        totaux = [sum(j["heures"]) for j in jours.values() if sum(j["heures"]) >= 1]
+        if totaux:
+            n = len(totaux)
+            self.lbl_resume.config(text=f"{n} jour{'s' if n > 1 else ''} enregistré{'s' if n > 1 else ''}"
+                                        f" · moyenne {duree(sum(totaux) / n)} par jour"
+                                        f" · total {duree(sum(totaux))}")
+        else:
+            self.lbl_resume.config(text="Aucune donnée pour l'instant.")
+
+        # 12 mois : se termine au mois courant, ou suit le mois choisi s'il est hors de la fenetre
+        debut = mois_decale(*courant, -11)
+        if sel < debut:
+            debut = sel
+        elif sel > courant:
+            debut = mois_decale(*sel, -11)
+        self.mois_affiches = [mois_decale(*debut, k) for k in range(12)]
+        barres_m, valeurs_m = [], []
+        for am in self.mois_affiches:
+            tot, nb = par_mois.get(am, (0.0, 0))
+            valeurs_m.append(tot)
+            choisi = am == sel
+            bulle = f"{MOIS[am[1] - 1].capitalize()} {am[0]} : {duree(tot)}"
+            if nb:
+                bulle += f" · {nb} jour{'s' if nb > 1 else ''} · moy. {duree_courte(tot / nb)}/jour"
+            etiquette = None
+            if choisi and tot >= 60:
+                etiquette = f"{int(tot // 3600)} h" if tot >= 3600 else duree_courte(tot)
+            barres_m.append(Barre(tot, MOIS_COURTS[am[1] - 1], bulle,
+                                  couleur if choisi else couleur_legere, fort=choisi, etiquette=etiquette))
+        self.g_mois.maj(barres_m, *echelle_heures(max(valeurs_m), 3))
+
+        # Navigation
+        self.lbl_mois.config(text=f"{MOIS[m - 1].capitalize()} {a}")
+        self.b_prec.activer(sel > premier)
+        self.b_suiv.activer(sel < dernier)
+
+        # Mois choisi, jour par jour
+        nb_jours = calendar.monthrange(a, m)[1]
+        jour_auj = auj.day if sel == courant else None
+        barres_j, valeurs_j, lignes = [], [], []
+        for jour in range(1, nb_jours + 1):
+            dt = date(a, m, jour)
+            j = jours.get(dt.isoformat())
+            v = sum(j["heures"]) if j else 0.0
+            valeurs_j.append(v)
+            if jour_auj and abs(jour - jour_auj) == 1:
+                axe = ""  # laisse la place au numero d'aujourd'hui
+            elif jour == jour_auj or jour == 1 or jour % 5 == 0:
+                axe = str(jour)
+            else:
+                axe = ""
+            nom = f"{JOURS[dt.weekday()].capitalize()} {jour} {MOIS[m - 1]}"
+            bulle = f"{nom} : {duree(v)}"
+            if j and v >= 60 and j.get("premiere") and j.get("derniere"):
+                bulle += f" ({j['premiere']} – {j['derniere']})"
+            barres_j.append(Barre(v, axe, bulle, couleur, fort=(jour == jour_auj)))
+            if v >= 1:
+                lignes.append((dt.isoformat(), (dt.strftime("%d/%m/%Y"), JOURS[dt.weekday()].capitalize(),
+                                                duree(v), (j or {}).get("premiere") or "–",
+                                                (j or {}).get("derniere") or "–")))
+        self.g_jours.maj(barres_j, *echelle_heures(max(valeurs_j)))
+
+        tot, nb = par_mois.get(sel, (0.0, 0))
+        if tot >= 60 and nb:
+            i_max = max(range(nb_jours), key=lambda k: valeurs_j[k])
+            d_max = date(a, m, i_max + 1)
+            ligne1 = (f"{duree(tot)} au total · {nb} jour{'s' if nb > 1 else ''} utilisé{'s' if nb > 1 else ''}"
+                      f" · moyenne {duree_courte(tot / nb)} par jour")
+            ligne2 = (f"Jour record : {JOURS[d_max.weekday()]} {d_max.day} {MOIS[m - 1]},"
+                      f" {duree(valeurs_j[i_max])}")
+            detail = "\n".join(t.replace(" h ", "\u00a0h\u00a0").replace(" min", "\u00a0min")
+                               for t in (ligne1, ligne2))
+        else:
+            detail = "Aucune donnée pour ce mois."
+        self.lbl_detail.config(text=detail)
+
+        # Tableau du mois (reconstruit seulement s'il a change)
+        sig = (sel, tuple(lignes))
+        if sig != self._sig_table:
+            self._sig_table = sig
+            choix = self.arbre.selection()
+            self.arbre.delete(*self.arbre.get_children())
+            for iid, valeurs in lignes:
+                self.arbre.insert("", "end", iid=iid, values=valeurs)
+            garde = [i for i in choix if self.arbre.exists(i)]
+            if garde:
+                self.arbre.selection_set(garde)
+
+    # ---- actions ------------------------------------------------------------
+    def changer(self, delta: int) -> None:
+        nouveau = mois_decale(*self.mois, delta)
+        if self.bornes[0] <= nouveau <= self.bornes[1]:
+            self.mois = nouveau
+            self.maj()
+
+    def _clic_mois(self, i: int) -> None:
+        if i < len(self.mois_affiches):
+            self.mois = self.mois_affiches[i]
+            self.maj()
+
+    def _clic_jour(self, i: int) -> None:
+        iid = date(self.mois[0], self.mois[1], i + 1).isoformat()
+        if self.arbre.exists(iid):
+            self.arbre.selection_set(iid)
+            enfants = self.arbre.get_children()
+            self.arbre.yview_moveto(max(0, enfants.index(iid) - 2) / max(1, len(enfants)))
+            self.arbre.see(iid)
+
+    def _exporter(self) -> None:
+        jours = [(k, v) for k, v in self.app.d.jours.items() if sum(v["heures"]) >= 1]
+        self.app._exporter(self.f, jours)
+
+    def _ferme(self, e) -> None:
+        if e.widget is self.f and self.app.historique is self:
+            self.app.historique = None
 
 
 # --------------------------------------------------------------------------

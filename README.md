@@ -16,12 +16,14 @@ Seul le temps **actif** est compté : après quelques minutes sans souris ni cla
 - Temps du jour en grand, graphique **heure par heure** et graphique des **7 derniers jours**. Survole une barre pour voir le détail.
 - **Vert** quand tu utilises le PC, **gris** quand le compteur est en pause.
 - L'icône dans la barre des tâches **affiche le temps du jour** (ex. « 5h » au-dessus de « 28 »), mise à jour chaque minute.
-- **Historique** de tous les jours, avec export CSV pour Excel.
+- **Historique** : histogramme des 12 derniers mois (clic sur un mois pour le détail), le mois choisi jour par jour, tableau des jours et export CSV pour Excel.
 - Démarrage automatique avec Windows (proposé au premier lancement, modifiable dans Réglages).
 - Fermer la fenêtre la réduit, le suivi continue. Le bouton **Quitter** arrête tout.
 - Thème clair ou sombre selon Windows.
 
 <img src="captures/icones_barre_des_taches.png" width="320" alt="Icône de la barre des tâches qui affiche le temps">
+
+<img src="captures/historique.png" width="420" alt="Fenêtre Historique : 12 derniers mois et mois jour par jour">
 
 ## Installation
 
@@ -33,9 +35,22 @@ Rien d'autre à installer : Python est inclus dans l'exe.
 
 L'exe n'est pas signé : Windows peut afficher « Windows a protégé votre ordinateur ». Clique sur **Informations complémentaires**, puis **Exécuter quand même**.
 
+### Mise à jour
+
+1. Dans Temps PC, clique sur **Quitter**.
+2. Remplace l'ancien `TempsPC.exe` par le nouveau, **au même endroit** (pour garder le démarrage automatique).
+3. Relance `TempsPC.exe`. Les données sont conservées.
+
 ## Données
 
 Tout reste sur le PC, dans `%APPDATA%\TempsPC\donnees.json` (bouton « Ouvrir le dossier » dans Réglages). Rien n'est envoyé sur Internet.
+
+Copies de sécurité automatiques dans `%APPDATA%\TempsPC\sauvegardes` : une par jour (les 14 dernières sont gardées) et une copie permanente avant chaque nouvelle version.
+
+## Versions
+
+- **1.1** : Historique avec histogrammes (12 derniers mois et mois jour par jour), copies de sécurité automatiques, fenêtres adaptées aux petits écrans.
+- **1.0** : première version.
 
 ## Lancer depuis le code source
 
