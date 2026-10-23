@@ -12,11 +12,11 @@ VSVersionInfo(
   kids=[
     StringFileInfo([
       StringTable('040C04B0', [
-        StringStruct('CompanyName', 'V. Schoebrechts'),
+        StringStruct('CompanyName', 'Temps PC'),
         StringStruct('FileDescription', 'Temps PC - temps passé sur l\'ordinateur / time spent on the computer'),
         StringStruct('FileVersion', '1.2.0'),
         StringStruct('InternalName', 'TempsPC'),
-        StringStruct('LegalCopyright', '© 2026 V. Schoebrechts'),
+        StringStruct('LegalCopyright', ''),
         StringStruct('OriginalFilename', 'TempsPC.exe'),
         StringStruct('ProductName', 'Temps PC'),
         StringStruct('ProductVersion', '1.2.0')
