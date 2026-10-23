@@ -19,12 +19,14 @@ Seul le temps **actif** est compté : après quelques minutes sans souris ni cla
 - **Vert** quand tu utilises le PC, **gris** quand le compteur est en pause.
 - L'icône dans la barre des tâches **affiche le temps du jour** (ex. « 5h » au-dessus de « 28 »), mise à jour chaque minute.
 - **Historique** : histogramme des 12 derniers mois (clic sur un mois pour le détail), le mois choisi jour par jour, tableau des jours et export CSV pour Excel.
-- En **français ou en anglais** : la langue de Windows, ou au choix dans Réglages.
+- En **6 langues** : anglais, chinois, hindi, espagnol, arabe et français (la langue de Windows, ou au choix dans Réglages).
 - Démarrage automatique avec Windows (proposé au premier lancement, modifiable dans Réglages).
 - Fermer la fenêtre la réduit, le suivi continue. Le bouton **Quitter** arrête tout.
 - Gratuite. Le bouton « Offre-moi un café » (PayPal) permet de soutenir le projet.
 
 <img src="captures/icones_barre_des_taches.png" width="320" alt="Icône de la barre des tâches qui affiche le temps">
+
+<img src="captures/six_langues.png" width="620" alt="La fenêtre principale dans les 6 langues / The main window in 6 languages">
 
 ## Installation
 
@@ -44,6 +46,7 @@ Copies de sécurité automatiques dans `%APPDATA%\TempsPC\sauvegardes` : une par
 
 ## Versions
 
+- **1.3** : 6 langues (anglais, chinois, hindi, espagnol, arabe, français), bouton de don à 2,50 €.
 - **1.2** : français / anglais, bouton « Offre-moi un café ».
 - **1.1** : Historique avec histogrammes (12 derniers mois et mois jour par jour), copies de sécurité automatiques, fenêtres adaptées aux petits écrans.
 - **1.0** : première version.
@@ -69,7 +72,7 @@ Only **active** time counts: after a few minutes without mouse or keyboard, the 
 - **Green** while you use the PC, **grey** when the counter is paused.
 - The taskbar icon **shows today's time** (e.g. “5h” above “28”), updated every minute.
 - **History**: last 12 months as a bar chart (click a month for details), the chosen month day by day, a table of days and CSV export for Excel.
-- **English or French**: same as Windows, or choose in Settings.
+- **6 languages**: English, Chinese, Hindi, Spanish, Arabic and French (same as Windows, or choose in Settings).
 - Starts with Windows (offered on first launch, can be changed in Settings).
 - Closing the window just minimizes it; tracking continues. **Quit** stops everything.
 - Free. The “Buy me a coffee” button (PayPal) lets you support the project.

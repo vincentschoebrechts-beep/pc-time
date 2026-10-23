@@ -42,7 +42,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
 APP_NOM = "Temps PC"
-APP_VERSION = "1.2"
+APP_VERSION = "1.3"
 COPYRIGHT = "© 2026 V. Schoebrechts"
 PAYPAL = "https://paypal.me/VSC1973"
 TICK_MS = 2000        # une mesure toutes les 2 secondes
@@ -69,6 +69,13 @@ TEXTES: dict[str, dict] = {
         "mois_annee": "{mois} {a}",
         "date_tableau": "%d/%m/%Y",
         "deux_points": " : ",
+        "axe_jour": "{jc} {n}",
+        "duree_hm": "{h} h {m:02d} min",
+        "duree_m": "{m} min",
+        "duree_courte_hm": "{h} h {m:02d}",
+        "grad_min": "{n} min",
+        "grad_h": "{n} h",
+        "langue": "Langue",
         "aujourdhui_date": "Aujourd'hui · {date}",
         "actif": "Actif",
         "en_pause": "En pause",
@@ -152,6 +159,13 @@ TEXTES: dict[str, dict] = {
         "mois_annee": "{mois} {a}",
         "date_tableau": "%Y-%m-%d",
         "deux_points": ": ",
+        "axe_jour": "{jc} {n}",
+        "duree_hm": "{h} h {m:02d} min",
+        "duree_m": "{m} min",
+        "duree_courte_hm": "{h} h {m:02d}",
+        "grad_min": "{n} min",
+        "grad_h": "{n} h",
+        "langue": "Language",
         "aujourdhui_date": "Today · {date}",
         "actif": "Active",
         "en_pause": "Paused",
@@ -225,33 +239,443 @@ TEXTES: dict[str, dict] = {
         "detail2": "Record day: {date}, {d}",
         "aucune_donnee_mois": "No data for this month.",
     },
+    "es": {
+        "jours": ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"],
+        "jours_courts": ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"],
+        "mois": ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
+                 "agosto", "septiembre", "octubre", "noviembre", "diciembre"],
+        "mois_courts": ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sept", "oct", "nov", "dic"],
+        "date_longue": "{jour}, {n} de {mois}",
+        "mois_annee": "{mois} de {a}",
+        "date_tableau": "%d/%m/%Y",
+        "deux_points": ": ",
+        "axe_jour": "{jc} {n}",
+        "duree_hm": "{h} h {m:02d} min",
+        "duree_m": "{m} min",
+        "duree_courte_hm": "{h} h {m:02d}",
+        "grad_min": "{n} min",
+        "grad_h": "{n} h",
+        "langue": "Idioma",
+        "aujourdhui_date": "Hoy · {date}",
+        "actif": "Activo",
+        "en_pause": "En pausa",
+        "inactif_depuis": "inactivo desde hace {d}",
+        "premiere_activite": "Primera actividad a las {h}",
+        "moyenne_7": "media de los 7 días anteriores: {d}",
+        "demarre": "El contador está empezando: usa tu PC con normalidad.",
+        "titre_heures": "Hoy, hora por hora",
+        "sous_heures": "minutos activos",
+        "titre_7j": "Los últimos 7 días",
+        "sous_7j": "pasa el ratón sobre una barra",
+        "auj_court": "Hoy",
+        "axe_heure": "{h} h",
+        "bulle_heure": "{h}:00 – {h2}:00: {d}",
+        "historique": "Historial",
+        "reglages": "Ajustes",
+        "quitter": "Salir",
+        "note": "Cerrar la ventana solo la minimiza. «Salir» detiene el seguimiento.",
+        "cafe": "☕ Invítame a un café con PayPal",
+        "erreur_sauvegarde": "No se pudieron guardar los datos: {e}",
+        "titre_pause": "{d} (en pausa)",
+        "fichier_illisible": "No se pudo leer el archivo de datos ({e}).\n\nSe ha guardado aparte aquí:\n{copie}",
+        "info_reduction": "Temps PC sigue contando, minimizado en la barra de tareas.\n\n"
+                          "Para detenerlo por completo, usa el botón «Salir».",
+        "confirmer_quitter": "¿Salir de Temps PC?\n\nEl tiempo no se contará mientras la aplicación esté cerrada.",
+        "proposer_demarrage": "¿Iniciar Temps PC automáticamente cada vez que se encienda el ordenador?\n\n"
+                              "Recomendado: el tiempo solo se cuenta mientras la aplicación está abierta.\n"
+                              "(Puedes cambiarlo más tarde en Ajustes.)",
+        "erreur_demarrage": "No se pudo activar el inicio automático:\n{e}",
+        "export_titre": "Exportar el historial",
+        "export_type": "Archivo CSV",
+        "export_colonnes": ["Fecha", "Día", "Minutos activos", "Duración", "Primera actividad", "Última actividad"],
+        "export_separateur": ";",
+        "export_erreur": "No se pudo exportar:\n{e}",
+        "export_ok": "Historial exportado:\n{chemin}",
+        "titre_reglages": "Ajustes",
+        "case_pause": "Pausar el contador cuando no uso el PC",
+        "apres": "tras",
+        "minutes_sans": "minutos sin ratón ni teclado",
+        "astuce": "Consejo: desmarca esta opción si también quieres contar las películas o vídeos que ves "
+                  "sin tocar el PC.",
+        "pas_detection": "La detección de inactividad no está disponible en este sistema: se cuenta todo el "
+                         "tiempo que la aplicación está abierta.",
+        "case_demarrage": "Iniciar Temps PC al encender el ordenador",
+        "langue_auto": "Automático ({nom})",
+        "donnees_dans": "Datos guardados en:",
+        "ouvrir_dossier": "Abrir la carpeta",
+        "enregistrer": "Guardar",
+        "annuler": "Cancelar",
+        "erreur_dossier": "No se pudo abrir la carpeta:\n{e}",
+        "erreur_minutes": "Indica un número de minutos entre 1 y 120.",
+        "erreur_demarrage_modif": "Inicio automático sin cambios:\n{e}",
+        "titre_historique": "Historial",
+        "jours_enregistres_1": "{n} día registrado",
+        "jours_enregistres_n": "{n} días registrados",
+        "resume": "{jours} · media {m} por día · total {t}",
+        "aucune_donnee": "Todavía no hay datos.",
+        "titre_12m": "Los últimos 12 meses",
+        "sous_12m": "haz clic en un mes para ver el detalle",
+        "nb_jours_1": "{n} día",
+        "nb_jours_n": "{n} días",
+        "bulle_mois_detail": " · {jours} · media {m}/día",
+        "titre_jpj": "Día a día",
+        "sous_jpj": "tiempo activo",
+        "exporter_tout": "Exportar todo a CSV (Excel)…",
+        "fermer": "Cerrar",
+        "col_date": "Fecha", "col_jour": "Día", "col_temps": "Tiempo activo", "col_debut": "Inicio", "col_fin": "Fin",
+        "jours_utilises_1": "{n} día de uso",
+        "jours_utilises_n": "{n} días de uso",
+        "detail1": "{t} en total · {jours} · media {m} por día",
+        "detail2": "Día récord: {date}, {d}",
+        "aucune_donnee_mois": "No hay datos para este mes.",
+    },
+    "zh": {
+        "jours": ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"],
+        "jours_courts": ["周一", "周二", "周三", "周四", "周五", "周六", "周日"],
+        "mois": ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
+        "mois_courts": ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
+        "date_longue": "{mois}{n}日 {jour}",
+        "mois_annee": "{a}年{mois}",
+        "date_tableau": "%Y-%m-%d",
+        "deux_points": "：",
+        "axe_jour": "{jc} {n}",
+        "duree_hm": "{h} 小时 {m} 分钟",
+        "duree_m": "{m} 分钟",
+        "duree_courte_hm": "{h} 小时 {m} 分",
+        "grad_min": "{n} 分钟",
+        "grad_h": "{n} 小时",
+        "langue": "语言",
+        "aujourdhui_date": "今天 · {date}",
+        "actif": "使用中",
+        "en_pause": "已暂停",
+        "inactif_depuis": "已空闲 {d}",
+        "premiere_activite": "首次活动 {h}",
+        "moyenne_7": "前 7 天平均：{d}",
+        "demarre": "计时器正在启动：照常使用电脑即可。",
+        "titre_heures": "今天（按小时）",
+        "sous_heures": "活跃分钟数",
+        "titre_7j": "最近 7 天",
+        "sous_7j": "将鼠标悬停在柱形上查看详情",
+        "auj_court": "今天",
+        "axe_heure": "{h}时",
+        "bulle_heure": "{h}:00–{h2}:00：{d}",
+        "historique": "历史记录",
+        "reglages": "设置",
+        "quitter": "退出",
+        "note": "关闭窗口只会将其最小化。点击“退出”才会停止计时。",
+        "cafe": "☕ 通过 PayPal 请我喝杯咖啡",
+        "erreur_sauvegarde": "无法保存数据：{e}",
+        "titre_pause": "{d}（已暂停）",
+        "fichier_illisible": "无法读取数据文件（{e}）。\n\n该文件已另存到：\n{copie}",
+        "info_reduction": "Temps PC 会继续计时，已最小化到任务栏。\n\n如需完全停止，请点击“退出”按钮。",
+        "confirmer_quitter": "退出 Temps PC？\n\n应用关闭期间不会计时。",
+        "proposer_demarrage": "每次开机时自动启动 Temps PC？\n\n推荐：只有在应用打开时才会计时。\n"
+                              "（以后可以在“设置”中更改。）",
+        "erreur_demarrage": "无法启用开机自动启动：\n{e}",
+        "export_titre": "导出历史记录",
+        "export_type": "CSV 文件",
+        "export_colonnes": ["日期", "星期", "活跃分钟数", "时长", "首次活动", "最后活动"],
+        "export_separateur": ",",
+        "export_erreur": "导出失败：\n{e}",
+        "export_ok": "历史记录已导出：\n{chemin}",
+        "titre_reglages": "设置",
+        "case_pause": "不使用电脑时暂停计时",
+        "apres": "在",
+        "minutes_sans": "分钟无鼠标或键盘操作后",
+        "astuce": "提示：如果你也想统计不碰电脑观看电影或视频的时间，请取消勾选此项。",
+        "pas_detection": "此系统不支持空闲检测：应用打开期间的所有时间都会被计入。",
+        "case_demarrage": "开机时启动 Temps PC",
+        "langue_auto": "自动（{nom}）",
+        "donnees_dans": "数据保存位置：",
+        "ouvrir_dossier": "打开文件夹",
+        "enregistrer": "保存",
+        "annuler": "取消",
+        "erreur_dossier": "无法打开文件夹：\n{e}",
+        "erreur_minutes": "请输入 1 到 120 之间的分钟数。",
+        "erreur_demarrage_modif": "开机自动启动未更改：\n{e}",
+        "titre_historique": "历史记录",
+        "jours_enregistres_1": "已记录 {n} 天",
+        "jours_enregistres_n": "已记录 {n} 天",
+        "resume": "{jours} · 平均每天 {m} · 合计 {t}",
+        "aucune_donnee": "暂无数据。",
+        "titre_12m": "最近 12 个月",
+        "sous_12m": "点击月份查看详情",
+        "nb_jours_1": "{n} 天",
+        "nb_jours_n": "{n} 天",
+        "bulle_mois_detail": " · {jours} · 平均 {m}/天",
+        "titre_jpj": "每日",
+        "sous_jpj": "活跃时间",
+        "exporter_tout": "全部导出为 CSV（Excel）…",
+        "fermer": "关闭",
+        "col_date": "日期", "col_jour": "星期", "col_temps": "活跃时间", "col_debut": "开始", "col_fin": "结束",
+        "jours_utilises_1": "使用 {n} 天",
+        "jours_utilises_n": "使用 {n} 天",
+        "detail1": "合计 {t} · {jours} · 平均每天 {m}",
+        "detail2": "最高纪录：{date}，{d}",
+        "aucune_donnee_mois": "本月暂无数据。",
+    },
+    "hi": {
+        "jours": ["सोमवार", "मंगलवार", "बुधवार", "गुरुवार", "शुक्रवार", "शनिवार", "रविवार"],
+        "jours_courts": ["सोम", "मंगल", "बुध", "गुरु", "शुक्र", "शनि", "रवि"],
+        "mois": ["जनवरी", "फ़रवरी", "मार्च", "अप्रैल", "मई", "जून", "जुलाई",
+                 "अगस्त", "सितंबर", "अक्तूबर", "नवंबर", "दिसंबर"],
+        "mois_courts": ["जन॰", "फ़र॰", "मार्च", "अप्रैल", "मई", "जून", "जुल॰", "अग॰", "सित॰", "अक्तू॰", "नव॰", "दिस॰"],
+        "date_longue": "{jour}, {n} {mois}",
+        "mois_annee": "{mois} {a}",
+        "date_tableau": "%d/%m/%Y",
+        "deux_points": ": ",
+        "axe_jour": "{jc} {n}",
+        "duree_hm": "{h} घंटे {m} मिनट",
+        "duree_hm_1": "{h} घंटा {m} मिनट",
+        "duree_m": "{m} मिनट",
+        "duree_courte_hm": "{h} घं {m:02d} मि",
+        "grad_min": "{n} मि",
+        "grad_h": "{n} घं",
+        "langue": "भाषा",
+        "aujourdhui_date": "आज · {date}",
+        "actif": "सक्रिय",
+        "en_pause": "रुका हुआ",
+        "inactif_depuis": "{d} से निष्क्रिय",
+        "premiere_activite": "पहली गतिविधि {h} बजे",
+        "moyenne_7": "पिछले 7 दिनों का औसत: {d}",
+        "demarre": "काउंटर शुरू हो रहा है: अपना पीसी सामान्य रूप से इस्तेमाल करें।",
+        "titre_heures": "आज, घंटे के हिसाब से",
+        "sous_heures": "सक्रिय मिनट",
+        "titre_7j": "पिछले 7 दिन",
+        "sous_7j": "विवरण के लिए बार पर माउस ले जाएँ",
+        "auj_court": "आज",
+        "axe_heure": "{h}:00",
+        "bulle_heure": "{h}:00 – {h2}:00: {d}",
+        "historique": "इतिहास",
+        "reglages": "सेटिंग्स",
+        "quitter": "बाहर निकलें",
+        "note": "विंडो बंद करने पर वह सिर्फ़ छोटी हो जाती है। “बाहर निकलें” से गिनती रुकती है।",
+        "cafe": "☕ PayPal से मुझे एक कॉफ़ी पिलाएँ",
+        "erreur_sauvegarde": "डेटा सहेजा नहीं जा सका: {e}",
+        "titre_pause": "{d} (रुका हुआ)",
+        "fichier_illisible": "डेटा फ़ाइल पढ़ी नहीं जा सकी ({e})।\n\nउसे यहाँ अलग रख दिया गया है:\n{copie}",
+        "info_reduction": "Temps PC टास्कबार में छोटा होकर गिनती जारी रखता है।\n\n"
+                          "इसे पूरी तरह रोकने के लिए “बाहर निकलें” बटन का इस्तेमाल करें।",
+        "confirmer_quitter": "Temps PC से बाहर निकलें?\n\nऐप बंद रहने तक समय नहीं गिना जाएगा।",
+        "proposer_demarrage": "क्या हर बार कंप्यूटर चालू होने पर Temps PC अपने-आप शुरू हो?\n\n"
+                              "सुझाया गया: समय सिर्फ़ तभी गिना जाता है जब ऐप खुला हो।\n"
+                              "(आप इसे बाद में सेटिंग्स में बदल सकते हैं।)",
+        "erreur_demarrage": "अपने-आप शुरू होना चालू नहीं किया जा सका:\n{e}",
+        "export_titre": "इतिहास निर्यात करें",
+        "export_type": "CSV फ़ाइल",
+        "export_colonnes": ["तारीख", "दिन", "सक्रिय मिनट", "अवधि", "पहली गतिविधि", "आख़िरी गतिविधि"],
+        "export_separateur": ",",
+        "export_erreur": "निर्यात नहीं हो सका:\n{e}",
+        "export_ok": "इतिहास निर्यात हो गया:\n{chemin}",
+        "titre_reglages": "सेटिंग्स",
+        "case_pause": "जब मैं पीसी इस्तेमाल नहीं कर रहा हूँ, तब काउंटर रोकें",
+        "apres": "माउस या कीबोर्ड के बिना",
+        "minutes_sans": "मिनट के बाद",
+        "astuce": "सुझाव: अगर आप पीसी को छुए बिना देखी गई फ़िल्में या वीडियो भी गिनना चाहते हैं, "
+                  "तो इसे अनचेक करें।",
+        "pas_detection": "इस सिस्टम पर निष्क्रियता पहचान उपलब्ध नहीं है: ऐप खुले रहने का पूरा समय गिना जाता है।",
+        "case_demarrage": "कंप्यूटर चालू होने पर Temps PC शुरू करें",
+        "langue_auto": "स्वचालित ({nom})",
+        "donnees_dans": "डेटा यहाँ सहेजा गया है:",
+        "ouvrir_dossier": "फ़ोल्डर खोलें",
+        "enregistrer": "सहेजें",
+        "annuler": "रद्द करें",
+        "erreur_dossier": "फ़ोल्डर खोला नहीं जा सका:\n{e}",
+        "erreur_minutes": "1 से 120 के बीच मिनटों की संख्या डालें।",
+        "erreur_demarrage_modif": "अपने-आप शुरू होने की सेटिंग नहीं बदली:\n{e}",
+        "titre_historique": "इतिहास",
+        "jours_enregistres_1": "{n} दिन दर्ज",
+        "jours_enregistres_n": "{n} दिन दर्ज",
+        "resume": "{jours} · रोज़ाना औसत {m} · कुल {t}",
+        "aucune_donnee": "अभी तक कोई डेटा नहीं।",
+        "titre_12m": "पिछले 12 महीने",
+        "sous_12m": "विवरण के लिए किसी महीने पर क्लिक करें",
+        "nb_jours_1": "{n} दिन",
+        "nb_jours_n": "{n} दिन",
+        "bulle_mois_detail": " · {jours} · औसत {m}/दिन",
+        "titre_jpj": "दिन-ब-दिन",
+        "sous_jpj": "सक्रिय समय",
+        "exporter_tout": "सब कुछ CSV (Excel) में निर्यात करें…",
+        "fermer": "बंद करें",
+        "col_date": "तारीख", "col_jour": "दिन", "col_temps": "सक्रिय समय", "col_debut": "शुरुआत", "col_fin": "अंत",
+        "jours_utilises_1": "{n} दिन इस्तेमाल",
+        "jours_utilises_n": "{n} दिन इस्तेमाल",
+        "detail1": "कुल {t} · {jours} · रोज़ाना औसत {m}",
+        "detail2": "सबसे ज़्यादा: {date}, {d}",
+        "aucune_donnee_mois": "इस महीने का कोई डेटा नहीं।",
+    },
+    "ar": {
+        "jours": ["الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت", "الأحد"],
+        "jours_courts": ["إثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت", "أحد"],
+        "mois": ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو",
+                 "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"],
+        "mois_courts": ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو",
+                        "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"],
+        "date_longue": "{jour}، {n} {mois}",
+        "mois_annee": "{mois} {a}",
+        "date_tableau": "%d/%m/%Y",
+        "deux_points": ": ",
+        "axe_jour": "{jc}",
+        "duree_hm": "{h} س {m:02d} د",
+        "duree_m": "{m} د",
+        "duree_courte_hm": "{h} س {m:02d}",
+        "grad_min": "{n} د",
+        "grad_h": "{n} س",
+        "langue": "اللغة",
+        "aujourdhui_date": "اليوم · {date}",
+        "actif": "نشط",
+        "en_pause": "متوقف مؤقتًا",
+        "inactif_depuis": "خامل منذ {d}",
+        "premiere_activite": "أول نشاط عند {h}",
+        "moyenne_7": "متوسط الأيام السبعة السابقة: {d}",
+        "demarre": "العداد يبدأ: استخدم حاسوبك كالمعتاد.",
+        "titre_heures": "اليوم، ساعة بساعة",
+        "sous_heures": "دقائق النشاط",
+        "titre_7j": "آخر 7 أيام",
+        "sous_7j": "مرّر الماوس فوق عمود لرؤية التفاصيل",
+        "auj_court": "اليوم",
+        "axe_heure": "{h}:00",
+        "bulle_heure": "{h}:00 – {h2}:00: {d}",
+        "historique": "السجل",
+        "reglages": "الإعدادات",
+        "quitter": "خروج",
+        "note": "إغلاق النافذة يصغّرها فقط. «خروج» يوقف العدّ.",
+        "cafe": "ادعمني بفنجان قهوة عبر باي بال ☕",
+        "erreur_sauvegarde": "تعذّر حفظ البيانات: {e}",
+        "titre_pause": "{d} (متوقف مؤقتًا)",
+        "fichier_illisible": "تعذّرت قراءة ملف البيانات ({e}).\n\nتم وضعه جانبًا هنا:\n{copie}",
+        "info_reduction": "يواصل التطبيق العدّ وهو مصغّر في شريط المهام.\n\nلإيقافه تمامًا، استخدم زر «خروج».",
+        "confirmer_quitter": "هل تريد الخروج من التطبيق؟\n\nلن يُحتسب الوقت ما دام التطبيق مغلقًا.",
+        "proposer_demarrage": "هل تريد تشغيل التطبيق تلقائيًا في كل مرة يبدأ فيها الحاسوب؟\n\n"
+                              "يُنصح بذلك: لا يُحتسب الوقت إلا عندما يكون التطبيق مفتوحًا.\n"
+                              "(يمكنك تغيير ذلك لاحقًا من الإعدادات.)",
+        "erreur_demarrage": "تعذّر تفعيل التشغيل التلقائي:\n{e}",
+        "export_titre": "تصدير السجل",
+        "export_type": "ملف CSV",
+        "export_colonnes": ["التاريخ", "اليوم", "دقائق النشاط", "المدة", "أول نشاط", "آخر نشاط"],
+        "export_separateur": ",",
+        "export_erreur": "تعذّر التصدير:\n{e}",
+        "export_ok": "تم تصدير السجل:\n{chemin}",
+        "titre_reglages": "الإعدادات",
+        "case_pause": "إيقاف العداد مؤقتًا عندما لا أستخدم الحاسوب",
+        "apres": "بعد",
+        "minutes_sans": "دقائق دون استخدام الماوس أو لوحة المفاتيح",
+        "astuce": "نصيحة: ألغِ تحديد هذا الخيار إذا أردت أيضًا احتساب الأفلام أو مقاطع الفيديو التي تشاهدها "
+                  "دون لمس الحاسوب.",
+        "pas_detection": "اكتشاف الخمول غير متاح على هذا النظام: يُحتسب كل الوقت الذي يكون فيه التطبيق مفتوحًا.",
+        "case_demarrage": "تشغيل التطبيق عند بدء تشغيل الحاسوب",
+        "langue_auto": "تلقائي ({nom})",
+        "donnees_dans": "البيانات محفوظة في:",
+        "ouvrir_dossier": "فتح المجلد",
+        "enregistrer": "حفظ",
+        "annuler": "إلغاء",
+        "erreur_dossier": "تعذّر فتح المجلد:\n{e}",
+        "erreur_minutes": "أدخل عدد دقائق بين 1 و120.",
+        "erreur_demarrage_modif": "لم يتغيّر التشغيل التلقائي:\n{e}",
+        "titre_historique": "السجل",
+        "jours_enregistres_1": "الأيام المسجّلة: {n}",
+        "jours_enregistres_n": "الأيام المسجّلة: {n}",
+        "resume": "{jours} · المتوسط {m} يوميًا · المجموع {t}",
+        "aucune_donnee": "لا توجد بيانات بعد.",
+        "titre_12m": "آخر 12 شهرًا",
+        "sous_12m": "انقر على شهر لرؤية التفاصيل",
+        "nb_jours_1": "الأيام: {n}",
+        "nb_jours_n": "الأيام: {n}",
+        "bulle_mois_detail": " · {jours} · المتوسط {m} يوميًا",
+        "titre_jpj": "يومًا بيوم",
+        "sous_jpj": "وقت النشاط",
+        "exporter_tout": "تصدير الكل إلى ملف إكسل…",
+        "fermer": "إغلاق",
+        "col_date": "التاريخ", "col_jour": "اليوم", "col_temps": "وقت النشاط", "col_debut": "البداية",
+        "col_fin": "النهاية",
+        "jours_utilises_1": "أيام الاستخدام: {n}",
+        "jours_utilises_n": "أيام الاستخدام: {n}",
+        "detail1": "المجموع {t} · {jours} · المتوسط {m} يوميًا",
+        "detail2": "اليوم القياسي: {date}، {d}",
+        "aucune_donnee_mois": "لا توجد بيانات لهذا الشهر.",
+    },
 }
-NOMS_LANGUES = {"fr": "Français", "en": "English"}
-LANGUE = "fr"
+# Ordre d'affichage : l'anglais d'abord, puis les langues les plus parlees, et le francais
+ORDRE_LANGUES = ["en", "zh", "hi", "es", "ar", "fr"]
+NOMS_LANGUES = {"en": "English", "zh": "中文（简体）", "hi": "हिन्दी", "es": "Español", "ar": "العربية",
+                "fr": "Français"}
+LANGUES_RTL = {"ar"}
+# Identifiants de langue Windows (LANG_xxx) et prefixes de locale
+LANGUES_WINDOWS = {0x09: "en", 0x04: "zh", 0x39: "hi", 0x0A: "es", 0x01: "ar", 0x0C: "fr"}
+# Polices Windows qui contiennent ces ecritures
+POLICES_WINDOWS = {"zh": "Microsoft YaHei UI", "hi": "Nirmala UI"}
+LANGUE = "en"
 
 
 def langue_systeme() -> str:
-    """'fr' si Windows (ou le systeme) est en francais, sinon 'en'."""
+    """Langue de Windows (ou du systeme) si elle est disponible, sinon l'anglais."""
     try:
         if WIN:
-            return "fr" if (ctypes.windll.kernel32.GetUserDefaultUILanguage() & 0x3FF) == 0x0C else "en"
+            return LANGUES_WINDOWS.get(ctypes.windll.kernel32.GetUserDefaultUILanguage() & 0x3FF, "en")
         import locale
         loc = os.environ.get("LC_ALL") or os.environ.get("LC_MESSAGES") or os.environ.get("LANG") \
             or (locale.getlocale()[0] or "")
-        return "fr" if loc.lower().startswith("fr") else "en"
+        return next((code for code in ORDRE_LANGUES if loc.lower().startswith(code)), "en")
     except Exception:
-        return "fr"
+        return "en"
 
 
 def definir_langue(langue: str) -> None:
-    global LANGUE
-    LANGUE = langue if langue in TEXTES else "fr"
+    global LANGUE, POLICE
+    LANGUE = langue if langue in TEXTES else "en"
+    if WIN and not os.environ.get("TEMPS_PC_POLICE"):
+        POLICE = POLICES_WINDOWS.get(LANGUE, "Segoe UI")
 
 
-def ouvrir_paypal(montant: int | None = None) -> None:
+def rtl() -> bool:
+    """Arabe : l'interface se lit de droite a gauche."""
+    return LANGUE in LANGUES_RTL
+
+
+def debut() -> str:
+    return "right" if rtl() else "left"
+
+
+def fin() -> str:
+    return "left" if rtl() else "right"
+
+
+def ancre_debut() -> str:
+    return "e" if rtl() else "w"
+
+
+def ancre_fin() -> str:
+    return "w" if rtl() else "e"
+
+
+def justif() -> str:
+    return "right" if rtl() else "left"
+
+
+def marge(avant: int, apres: int) -> tuple[int, int]:
+    return (apres, avant) if rtl() else (avant, apres)
+
+
+MONTANTS_DON = (2.5, 5, 10)
+
+
+def lien_paypal(montant: float | None = None) -> str:
+    if not montant:
+        return PAYPAL
+    texte = f"{montant:.2f}" if montant != int(montant) else str(int(montant))
+    return f"{PAYPAL}/{texte}EUR"
+
+
+def libelle_montant(montant: float) -> str:
+    """« 2,50 € » en francais et en espagnol, « €2.50 » ailleurs."""
+    v = f"{montant:.2f}" if montant != int(montant) else str(int(montant))
+    return f"{v.replace('.', ',')} €" if LANGUE in ("fr", "es") else f"€{v}"
+
+
+def ouvrir_paypal(montant: float | None = None) -> None:
     """Page PayPal.me (dans le navigateur), avec le montant deja rempli si on l'a choisi."""
     try:
-        webbrowser.open(f"{PAYPAL}/{montant}EUR" if montant else PAYPAL)
+        webbrowser.open(lien_paypal(montant))
     except Exception:
         pass
 
@@ -263,9 +687,28 @@ def choisir_langue(reglage: str | None) -> str:
     return reglage if reglage in TEXTES else langue_systeme()
 
 
+CHIFFRES_ARABES = str.maketrans("0123456789", "٠١٢٣٤٥٦٧٨٩")
+NON_TRADUITS = ("chemin", "copie", "e")  # chemins de fichiers et messages d'erreur : tels quels
+
+
+def nombre(texte) -> str:
+    """En arabe, chiffres arabes orientaux : Windows les place alors dans le bon sens de lecture."""
+    texte = str(texte)
+    return texte.translate(CHIFFRES_ARABES) if LANGUE == "ar" else texte
+
+
 def t(cle: str, **kw):
-    val = TEXTES[LANGUE].get(cle, TEXTES["fr"].get(cle, cle))
-    return val.format(**kw) if kw and isinstance(val, str) else val
+    val = TEXTES[LANGUE].get(cle, TEXTES["en"].get(cle, cle))
+    if not isinstance(val, str):
+        return val
+    if LANGUE != "ar":
+        return val.format(**kw) if kw else val
+    gardes = {k: str(v) for k, v in kw.items() if k in NON_TRADUITS}
+    texte = val.format(**{k: (f"\x00{k}\x00" if k in gardes else v) for k, v in kw.items()}) if kw else val
+    texte = nombre(texte)
+    for k, v in gardes.items():
+        texte = texte.replace(f"\x00{k}\x00", v)
+    return texte
 
 
 def pluriel(n: int, cle: str) -> str:
@@ -295,9 +738,13 @@ def mois_annee(a: int, m: int) -> str:
 
 def insecables(texte: str) -> str:
     """Evite de couper « 5 h 28 » ou « 12 min » en fin de ligne."""
-    return texte.replace(" h ", "\u00a0h\u00a0").replace(" min", "\u00a0min").replace("à ", "à\u00a0")
+    texte = texte.replace(" h ", "\u00a0h\u00a0").replace(" min", "\u00a0min").replace("à ", "à\u00a0")
+    return re.sub(r"(\d) ", "\\1\u00a0", texte)
 
 POLICE = "Segoe UI" if WIN else ("Helvetica Neue" if MAC else "DejaVu Sans")
+POLICE_FORCEE = os.environ.get("TEMPS_PC_POLICE")  # pour les essais uniquement
+if POLICE_FORCEE:
+    POLICE = POLICE_FORCEE
 
 THEMES = {
     "clair": dict(fond="#fcfcfb", carte="#f1f0ec", texte="#0b0b0b", texte2="#52514e",
@@ -319,17 +766,19 @@ THEMES = {
 # Petits utilitaires
 # --------------------------------------------------------------------------
 def duree(sec: float) -> str:
-    """'3 h 05 min' ou '42 min'."""
+    """'3 h 05 min' ou '42 min' (dans la langue choisie)."""
     m = int(max(0, sec) // 60)
     h, m = divmod(m, 60)
-    return f"{h} h {m:02d} min" if h else f"{m} min"
+    if not h:
+        return t("duree_m", m=m)
+    return t("duree_hm_1" if h == 1 and "duree_hm_1" in TEXTES[LANGUE] else "duree_hm", h=h, m=m)
 
 
 def duree_courte(sec: float) -> str:
     """'3 h 05' ou '42 min'."""
     m = int(max(0, sec) // 60)
     h, m = divmod(m, 60)
-    return f"{h} h {m:02d}" if h else f"{m} min"
+    return t("duree_courte_hm", h=h, m=m) if h else t("duree_m", m=m)
 
 
 def heure_txt(ts: float) -> str:
@@ -806,7 +1255,7 @@ def echelle_heures(max_sec: float, graduations_max: int = 4) -> tuple[float, lis
         if math.ceil(hmax / pas) <= graduations_max:
             break
     n = max(1, math.ceil(hmax / pas))
-    return n * pas * 3600.0, [(k * pas * 3600.0, f"{k * pas} h") for k in range(1, n + 1)]
+    return n * pas * 3600.0, [(k * pas * 3600.0, t("grad_h", n=k * pas)) for k in range(1, n + 1)]
 
 
 def mois_decale(an: int, mois: int, delta: int) -> tuple[int, int]:
@@ -890,8 +1339,10 @@ class Graphique(tk.Canvas):
                                  fill=th["texte"] if b.fort else th["discret"],
                                  font=(POLICE, 9, "bold") if b.fort else petite)
             if b.etiquette:
-                self.create_text((x0 + x1) / 2, y0 - hb - px(4), text=b.etiquette, anchor="s",
-                                 fill=th["texte"], font=(POLICE, 9, "bold"))
+                et = self.create_text((x0 + x1) / 2, y0 - hb - px(4), text=b.etiquette, anchor="s",
+                                      fill=th["texte"], font=(POLICE, 9, "bold"))
+                ex0, _, ex1, _ = self.bbox(et)
+                self.move(et, max(0, px(2) - ex0) - max(0, ex1 - (w - px(2))), 0)
             self.zones.append((xa, xa + pas, y0 - hb))
         self._bulle()
 
@@ -1033,8 +1484,8 @@ class BoutonCafe(tk.Label):
     """Petit bouton jaune « 2 € » qui ouvre PayPal avec ce montant."""
     JAUNE, JAUNE_SURVOL = "#facc15", "#eab308"
 
-    def __init__(self, master, montant: int, app: "Application") -> None:
-        super().__init__(master, text=f"{montant} €", bg=self.JAUNE, fg="#1a1a19",
+    def __init__(self, master, montant: float, app: "Application") -> None:
+        super().__init__(master, text=libelle_montant(montant), bg=self.JAUNE, fg="#1a1a19",
                          font=(POLICE, 9, "bold"), padx=app.px(8), pady=app.px(1), cursor="hand2")
         self.bind("<Enter>", lambda e: self.config(bg=self.JAUNE_SURVOL))
         self.bind("<Leave>", lambda e: self.config(bg=self.JAUNE))
@@ -1122,33 +1573,43 @@ class Application:
         st.map("Treeview.Heading", background=[("active", th["bouton_survol"])])
         st.configure("Vertical.TScrollbar", background=th["bouton"], troughcolor=th["fond"],
                      bordercolor=th["fond"], arrowcolor=th["texte2"], relief="flat")
+        st.configure("TCombobox", fieldbackground=th["carte"], background=th["bouton"],
+                     foreground=th["texte"], arrowcolor=th["texte2"], bordercolor=th["axe"],
+                     lightcolor=th["carte"], darkcolor=th["carte"], padding=self.px(3))
+        st.map("TCombobox", fieldbackground=[("readonly", th["carte"])],
+               foreground=[("readonly", th["texte"])], selectbackground=[("readonly", th["carte"])],
+               selectforeground=[("readonly", th["texte"])])
+        self.root.option_add("*TCombobox*Listbox.background", th["carte"])
+        self.root.option_add("*TCombobox*Listbox.foreground", th["texte"])
+        self.root.option_add("*TCombobox*Listbox.selectBackground", th["barre_actif"])
+        self.root.option_add("*TCombobox*Listbox.selectForeground", "#ffffff")
 
     def _construire(self) -> None:
         th, px = self.th, self.px
         cadre = tk.Frame(self.root, bg=th["fond"], padx=px(22), pady=px(18))
         cadre.pack(fill="both", expand=True)
 
-        self.lbl_date = tk.Label(cadre, bg=th["fond"], fg=th["texte2"], font=(POLICE, 11), anchor="w")
+        self.lbl_date = tk.Label(cadre, bg=th["fond"], fg=th["texte2"], font=(POLICE, 11), anchor=ancre_debut())
         self.lbl_date.pack(fill="x")
 
         ligne = tk.Frame(cadre, bg=th["fond"])
         ligne.pack(fill="x", pady=(px(2), 0))
         self.lbl_total = tk.Label(ligne, bg=th["fond"], fg=th["texte"],
-                                  font=(POLICE, 32, "bold"), anchor="w")
-        self.lbl_total.pack(side="left")
+                                  font=(POLICE, 32, "bold"), anchor=ancre_debut())
+        self.lbl_total.pack(side=debut())
         statut = tk.Frame(ligne, bg=th["fond"])
-        statut.pack(side="right", anchor="s", pady=(0, px(8)))
+        statut.pack(side=fin(), anchor="s", pady=(0, px(8)))
         haut_statut = tk.Frame(statut, bg=th["fond"])
-        haut_statut.pack(anchor="e")
+        haut_statut.pack(anchor=ancre_fin())
         self.lbl_point = tk.Label(haut_statut, text="●", bg=th["fond"], font=(POLICE, 11))
-        self.lbl_point.pack(side="left")
+        self.lbl_point.pack(side=debut())
         self.lbl_statut = tk.Label(haut_statut, bg=th["fond"], fg=th["texte2"], font=(POLICE, 10))
-        self.lbl_statut.pack(side="left", padx=(px(4), 0))
+        self.lbl_statut.pack(side=debut(), padx=marge(px(4), 0))
         self.lbl_statut2 = tk.Label(statut, bg=th["fond"], fg=th["discret"], font=(POLICE, 9))
-        self.lbl_statut2.pack(anchor="e")
+        self.lbl_statut2.pack(anchor=ancre_fin())
 
         self.lbl_info = tk.Label(cadre, bg=th["fond"], fg=th["texte2"], font=(POLICE, 10),
-                                 anchor="w", justify="left")
+                                 anchor=ancre_debut(), justify=justif())
         self.lbl_info.pack(fill="x")
         def ajuster(e):
             largeur = max(200, e.width - px(44))
@@ -1171,28 +1632,28 @@ class Application:
         pied.pack(side="bottom", fill="x", pady=(px(12), 0))
         cafe = tk.Label(pied, text=t("cafe"), bg=th["fond"], fg=th["texte2"], font=(POLICE, 9),
                         cursor="hand2")
-        cafe.pack(side="left")
+        cafe.pack(side=debut())
         cafe.bind("<Button-1>", lambda e: ouvrir_paypal())
-        for montant in (2, 5, 10):
-            BoutonCafe(pied, montant, self).pack(side="left", padx=(px(6), 0))
+        for montant in MONTANTS_DON:
+            BoutonCafe(pied, montant, self).pack(side=debut(), padx=marge(px(6), 0))
         tk.Label(pied, text=COPYRIGHT, bg=th["fond"], fg=th["copyright"], font=(POLICE, 7)).pack(
-            side="right", anchor="s")
+            side=fin(), anchor="s")
         self.lbl_note = tk.Label(bas, bg=th["fond"], fg=th["discret"], font=(POLICE, 9),
-                                 anchor="w", justify="left")
+                                 anchor=ancre_debut(), justify=justif())
         self.lbl_note.pack(side="bottom", fill="x", pady=(px(10), 0))
         boutons = tk.Frame(bas, bg=th["fond"])
         boutons.pack(side="bottom", fill="x")
-        Bouton(boutons, t("historique"), self.ouvrir_historique, self).pack(side="left")
-        Bouton(boutons, t("reglages"), self.ouvrir_reglages, self).pack(side="left", padx=(px(8), 0))
-        Bouton(boutons, t("quitter"), self.quitter, self).pack(side="right")
+        Bouton(boutons, t("historique"), self.ouvrir_historique, self).pack(side=debut())
+        Bouton(boutons, t("reglages"), self.ouvrir_reglages, self).pack(side=debut(), padx=marge(px(8), 0))
+        Bouton(boutons, t("quitter"), self.quitter, self).pack(side=fin())
 
     def _titre(self, parent, texte: str, sous_titre: str) -> None:
         th, px = self.th, self.px
         f = tk.Frame(parent, bg=th["fond"])
         f.pack(fill="x", pady=(px(18), px(2)))
-        tk.Label(f, text=texte, bg=th["fond"], fg=th["texte"], font=(POLICE, 11, "bold")).pack(side="left")
+        tk.Label(f, text=texte, bg=th["fond"], fg=th["texte"], font=(POLICE, 11, "bold")).pack(side=debut())
         tk.Label(f, text=sous_titre, bg=th["fond"], fg=th["discret"], font=(POLICE, 9)).pack(
-            side="right", anchor="s")
+            side=fin(), anchor="s")
 
     # ---- boucle -------------------------------------------------------------
     def _tick(self) -> None:
@@ -1271,7 +1732,7 @@ class Application:
         heures = j["heures"] if j else [0.0] * 24
         barres_h = [Barre(v, t("axe_heure", h=h) if h % 6 == 0 else "",
                           t("bulle_heure", h=h, h2=h + 1, d=duree(v)), couleur) for h, v in enumerate(heures)]
-        self.graph_heures.maj(barres_h, 3600.0, [(1800, "30 min"), (3600, "60 min")])
+        self.graph_heures.maj(barres_h, 3600.0, [(1800, t("grad_min", n=30)), (3600, t("grad_min", n=60))])
 
         # 7 derniers jours
         barres_j = []
@@ -1281,7 +1742,7 @@ class Application:
             v = self.d.total(jr.isoformat())
             valeurs.append(v)
             barres_j.append(Barre(
-                v, t("auj_court") if k == 0 else f"{t('jours_courts')[jr.weekday()]} {jr.day}",
+                v, t("auj_court") if k == 0 else t("axe_jour", jc=t("jours_courts")[jr.weekday()], n=jr.day),
                 date_longue(jr, True) + t("deux_points") + duree(v), couleur if k == 0 else couleur_passee,
                 fort=(k == 0), etiquette=duree_courte(v) if k == 0 else None))
         self.graph_jours.maj(barres_j, *echelle_heures(max(valeurs)))
@@ -1302,7 +1763,7 @@ class Application:
             return
         self._etat_icone = etat
         temps = duree_courte(total) if self.compteur.actif else t("titre_pause", d=duree_courte(total))
-        self.root.title(f"{temps} – {APP_NOM}")
+        self.root.title(f"{APP_NOM} – {temps}" if rtl() else f"{temps} – {APP_NOM}")
         try:
             icones = icones_temps(self.root, total, self.compteur.actif)
             self.root.iconphoto(True, *icones)
@@ -1414,47 +1875,46 @@ class Application:
             demarrage_avant = False
         v_dem = tk.BooleanVar(value=demarrage_avant)
         langue_avant = r.get("langue") if r.get("langue") in TEXTES else "auto"
-        v_langue = tk.StringVar(value=langue_avant)
+        codes_langue = ["auto"] + ORDRE_LANGUES
+        libelles_langue = [t("langue_auto", nom=NOMS_LANGUES[langue_systeme()])] + \
+                          [NOMS_LANGUES[c] for c in ORDRE_LANGUES]
 
         def case(texte, var):
             return tk.Checkbutton(cadre, text=texte, variable=var, bg=th["fond"], fg=th["texte"],
                                   activebackground=th["fond"], activeforeground=th["texte"],
                                   selectcolor=th["carte"], highlightthickness=0, bd=0,
-                                  font=(POLICE, 10), anchor="w", justify="left",
+                                  font=(POLICE, 10), anchor=ancre_debut(), justify=justif(),
                                   wraplength=px(420))
 
         case(t("case_pause"), v_pause).pack(fill="x")
         ligne = tk.Frame(cadre, bg=th["fond"])
-        ligne.pack(fill="x", padx=(px(26), 0), pady=(px(4), 0))
-        tk.Label(ligne, text=t("apres"), bg=th["fond"], fg=th["texte2"], font=(POLICE, 10)).pack(side="left")
+        ligne.pack(fill="x", padx=marge(px(26), 0), pady=(px(4), 0))
+        tk.Label(ligne, text=t("apres"), bg=th["fond"], fg=th["texte2"], font=(POLICE, 10)).pack(side=debut())
         tk.Spinbox(ligne, from_=1, to=120, width=4, textvariable=v_min, font=(POLICE, 10),
                    bg=th["carte"], fg=th["texte"], buttonbackground=th["bouton"],
                    insertbackground=th["texte"], relief="flat", justify="center").pack(
-            side="left", padx=px(6))
+            side=debut(), padx=px(6))
         tk.Label(ligne, text=t("minutes_sans"), bg=th["fond"], fg=th["texte2"],
-                 font=(POLICE, 10)).pack(side="left")
+                 font=(POLICE, 10)).pack(side=debut())
         aide = t("astuce") if self.det.methode is not None else t("pas_detection")
-        tk.Label(cadre, text=aide, bg=th["fond"], fg=th["discret"], font=(POLICE, 9), anchor="w",
-                 justify="left", wraplength=px(420)).pack(fill="x", padx=(px(26), 0), pady=(px(6), 0))
+        tk.Label(cadre, text=aide, bg=th["fond"], fg=th["discret"], font=(POLICE, 9), anchor=ancre_debut(),
+                 justify=justif(), wraplength=px(420)).pack(fill="x", padx=marge(px(26), 0), pady=(px(6), 0))
 
         case(t("case_demarrage"), v_dem).pack(fill="x", pady=(px(18), 0))
 
-        # Langue (toujours ecrit dans les deux langues, pour s'y retrouver)
-        tk.Label(cadre, text="Langue / Language", bg=th["fond"], fg=th["texte2"], font=(POLICE, 10),
-                 anchor="w").pack(fill="x", pady=(px(18), 0))
-        choix_langue = tk.Frame(cadre, bg=th["fond"])
-        choix_langue.pack(fill="x", padx=(px(20), 0), pady=(px(2), 0))
-        for valeur, libelle in (("auto", t("langue_auto", nom=NOMS_LANGUES[langue_systeme()])),
-                                ("fr", NOMS_LANGUES["fr"]), ("en", NOMS_LANGUES["en"])):
-            tk.Radiobutton(choix_langue, text=libelle, value=valeur, variable=v_langue, bg=th["fond"],
-                           fg=th["texte"], activebackground=th["fond"], activeforeground=th["texte"],
-                           selectcolor=th["carte"], highlightthickness=0, bd=0,
-                           font=(POLICE, 10)).pack(side="left", padx=(0, px(14)))
+        # Langue (toujours aussi ecrit en anglais, pour s'y retrouver)
+        titre_langue = t("langue") if LANGUE == "en" else f"{t('langue')} / Language"
+        tk.Label(cadre, text=titre_langue, bg=th["fond"], fg=th["texte2"], font=(POLICE, 10),
+                 anchor=ancre_debut()).pack(fill="x", pady=(px(18), 0))
+        self.choix_langue = choix_langue = ttk.Combobox(cadre, values=libelles_langue, state="readonly",
+                                                         font=(POLICE, 10), width=24)
+        choix_langue.current(codes_langue.index(langue_avant))
+        choix_langue.pack(anchor=ancre_debut(), padx=marge(px(20), 0), pady=(px(4), 0))
 
         tk.Label(cadre, text=t("donnees_dans"), bg=th["fond"], fg=th["texte2"],
-                 font=(POLICE, 10), anchor="w").pack(fill="x", pady=(px(18), 0))
+                 font=(POLICE, 10), anchor=ancre_debut()).pack(fill="x", pady=(px(18), 0))
         tk.Label(cadre, text=self.d.chemin, bg=th["fond"], fg=th["discret"], font=(POLICE, 9),
-                 anchor="w", justify="left", wraplength=px(420)).pack(fill="x")
+                 anchor=ancre_debut(), justify="left", wraplength=px(420)).pack(fill="x")
 
         def ouvrir():
             try:
@@ -1477,7 +1937,7 @@ class Application:
                     Demarrage.regler(bool(v_dem.get()))
                 except OSError as e:
                     messagebox.showerror(APP_NOM, t("erreur_demarrage_modif", e=e), parent=f)
-            nouvelle = v_langue.get()
+            nouvelle = codes_langue[max(0, choix_langue.current())]
             if nouvelle == "auto":
                 r.pop("langue", None)
             else:
@@ -1492,9 +1952,9 @@ class Application:
 
         bas = tk.Frame(cadre, bg=th["fond"])
         bas.pack(side="bottom", fill="x", pady=(px(20), 0))
-        Bouton(bas, t("ouvrir_dossier"), ouvrir, self).pack(side="left")
-        Bouton(bas, t("enregistrer"), valider, self).pack(side="right")
-        Bouton(bas, t("annuler"), f.destroy, self).pack(side="right", padx=(0, px(8)))
+        Bouton(bas, t("ouvrir_dossier"), ouvrir, self).pack(side=debut())
+        Bouton(bas, t("enregistrer"), valider, self).pack(side=fin())
+        Bouton(bas, t("annuler"), f.destroy, self).pack(side=fin(), padx=marge(0, px(8)))
 
 
 # --------------------------------------------------------------------------
@@ -1519,7 +1979,7 @@ class FenetreHistorique:
 
         cadre = tk.Frame(f, bg=th["fond"], padx=px(20), pady=px(14))
         cadre.pack(fill="both", expand=True)
-        self.lbl_resume = tk.Label(cadre, bg=th["fond"], fg=th["texte2"], font=(POLICE, 10), anchor="w")
+        self.lbl_resume = tk.Label(cadre, bg=th["fond"], fg=th["texte2"], font=(POLICE, 10), anchor=ancre_debut())
         self.lbl_resume.pack(fill="x")
 
         app._titre(cadre, t("titre_12m"), t("sous_12m"))
@@ -1535,7 +1995,7 @@ class FenetreHistorique:
         self.b_suiv = Bouton(nav, "›", lambda: self.changer(1), app)
         self.b_suiv.pack(side="left")
         self.lbl_detail = tk.Label(cadre, bg=th["fond"], fg=th["texte2"], font=(POLICE, 10),
-                                   anchor="w", justify="left")
+                                   anchor=ancre_debut(), justify=justif())
         self.lbl_detail.pack(fill="x", pady=(px(6), 0))
         cadre.bind("<Configure>", lambda e: self.lbl_detail.config(wraplength=max(200, e.width - px(40))),
                    add="+")
@@ -1546,8 +2006,8 @@ class FenetreHistorique:
 
         bas = tk.Frame(cadre, bg=th["fond"])
         bas.pack(side="bottom", fill="x", pady=(px(12), 0))
-        Bouton(bas, t("exporter_tout"), self._exporter, app).pack(side="left")
-        Bouton(bas, t("fermer"), f.destroy, app).pack(side="right")
+        Bouton(bas, t("exporter_tout"), self._exporter, app).pack(side=debut())
+        Bouton(bas, t("fermer"), f.destroy, app).pack(side=fin())
 
         zone = tk.Frame(cadre, bg=th["fond"])
         zone.pack(fill="both", expand=True, pady=(px(14), 0))
@@ -1571,13 +2031,13 @@ class FenetreHistorique:
         """{(annee, mois): [temps total, nombre de jours utilises]}"""
         res: dict[tuple[int, int], list] = {}
         for cle, j in self.app.d.jours.items():
-            t = sum(j["heures"])
-            if t < 1:
+            tot = sum(j["heures"])
+            if tot < 1:
                 continue
             dt = date.fromisoformat(cle)
             m = res.setdefault((dt.year, dt.month), [0.0, 0])
-            m[0] += t
-            if t >= 60:
+            m[0] += tot
+            if tot >= 60:
                 m[1] += 1
         return res
 
@@ -1617,7 +2077,7 @@ class FenetreHistorique:
             debut = mois_decale(*sel, -11)
         self.mois_affiches = [mois_decale(*debut, k) for k in range(12)]
         barres_m, valeurs_m = [], []
-        for am in self.mois_affiches:
+        for i, am in enumerate(self.mois_affiches):
             tot, nb = par_mois.get(am, (0.0, 0))
             valeurs_m.append(tot)
             choisi = am == sel
@@ -1626,8 +2086,10 @@ class FenetreHistorique:
                 bulle += t("bulle_mois_detail", jours=pluriel(nb, "nb_jours"), m=duree_courte(tot / nb))
             etiquette = None
             if choisi and tot >= 60:
-                etiquette = f"{int(tot // 3600)} h" if tot >= 3600 else duree_courte(tot)
-            barres_m.append(Barre(tot, t("mois_courts")[am[1] - 1], bulle,
+                etiquette = t("grad_h", n=int(tot // 3600)) if tot >= 3600 else duree_courte(tot)
+            # en arabe, les noms de mois sont longs : un sur deux (et le mois choisi)
+            axe = t("mois_courts")[am[1] - 1] if (not rtl() or choisi or i % 2 == 1) else ""
+            barres_m.append(Barre(tot, axe, bulle,
                                   couleur if choisi else couleur_legere, fort=choisi, etiquette=etiquette))
         self.g_mois.maj(barres_m, *echelle_heures(max(valeurs_m), 3))
 
@@ -1648,17 +2110,17 @@ class FenetreHistorique:
             if jour_auj and abs(jour - jour_auj) == 1:
                 axe = ""  # laisse la place au numero d'aujourd'hui
             elif jour == jour_auj or jour == 1 or jour % 5 == 0:
-                axe = str(jour)
+                axe = nombre(jour)
             else:
                 axe = ""
             bulle = date_longue(dt, True) + t("deux_points") + duree(v)
             if j and v >= 60 and j.get("premiere") and j.get("derniere"):
-                bulle += f" ({j['premiere']} – {j['derniere']})"
+                bulle += nombre(f" ({j['premiere']} – {j['derniere']})")
             barres_j.append(Barre(v, axe, bulle, couleur, fort=(jour == jour_auj)))
             if v >= 1:
-                lignes.append((dt.isoformat(), (dt.strftime(t("date_tableau")), majuscule(nom_jour(dt)),
-                                                duree(v), (j or {}).get("premiere") or "–",
-                                                (j or {}).get("derniere") or "–")))
+                lignes.append((dt.isoformat(), (nombre(dt.strftime(t("date_tableau"))), majuscule(nom_jour(dt)),
+                                                duree(v), nombre((j or {}).get("premiere") or "–"),
+                                                nombre((j or {}).get("derniere") or "–"))))
         self.g_jours.maj(barres_j, *echelle_heures(max(valeurs_j)))
 
         tot, nb = par_mois.get(sel, (0.0, 0))
