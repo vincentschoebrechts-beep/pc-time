@@ -14,6 +14,7 @@ Python 3 doit etre installe : https://www.python.org/downloads/
 - Fermer la fenetre la reduit dans la barre des taches : le suivi continue.
   Le bouton « Quitter » arrete vraiment l'application.
 - Historique : histogramme des 12 derniers mois et du mois jour par jour.
+- En francais ou en anglais (langue de Windows, ou au choix dans Reglages).
 - Les donnees restent sur ce PC (Windows : %APPDATA%\\TempsPC\\donnees.json),
   avec une copie de securite automatique chaque jour (dossier « sauvegardes »).
 """
@@ -36,11 +37,14 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 
 import calendar
+import webbrowser
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
 APP_NOM = "Temps PC"
-APP_VERSION = "1.1"
+APP_VERSION = "1.2"
+COPYRIGHT = "© 2026 V. Schoebrechts"
+PAYPAL = "https://paypal.me/VSC1973"
 TICK_MS = 2000        # une mesure toutes les 2 secondes
 SAUVEGARDE_S = 30     # ecriture sur le disque toutes les 30 secondes
 ECART_MAX_S = 30      # trou plus long entre deux mesures = veille du PC : non compte
@@ -48,13 +52,250 @@ PORT = 47615          # sert a n'avoir qu'une seule copie de l'appli ouverte
 WIN = sys.platform == "win32"
 MAC = sys.platform == "darwin"
 
-JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
-JOURS_COURTS = ["lun", "mar", "mer", "jeu", "ven", "sam", "dim"]
-MOIS_COURTS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.",
-               "oct.", "nov.", "déc."]
 SAUVEGARDES_GARDEES = 14
-MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet",
-        "août", "septembre", "octobre", "novembre", "décembre"]
+
+# --------------------------------------------------------------------------
+# Textes en francais et en anglais
+# --------------------------------------------------------------------------
+TEXTES: dict[str, dict] = {
+    "fr": {
+        "jours": ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"],
+        "jours_courts": ["lun", "mar", "mer", "jeu", "ven", "sam", "dim"],
+        "mois": ["janvier", "février", "mars", "avril", "mai", "juin", "juillet",
+                 "août", "septembre", "octobre", "novembre", "décembre"],
+        "mois_courts": ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.",
+                        "oct.", "nov.", "déc."],
+        "date_longue": "{jour} {n} {mois}",
+        "mois_annee": "{mois} {a}",
+        "date_tableau": "%d/%m/%Y",
+        "deux_points": " : ",
+        "aujourdhui_date": "Aujourd'hui · {date}",
+        "actif": "Actif",
+        "en_pause": "En pause",
+        "inactif_depuis": "inactif depuis {d}",
+        "premiere_activite": "Première activité à {h}",
+        "moyenne_7": "moyenne des 7 jours précédents : {d}",
+        "demarre": "Le compteur démarre : utilise ton PC normalement.",
+        "titre_heures": "Aujourd'hui, heure par heure",
+        "sous_heures": "minutes actives",
+        "titre_7j": "Les 7 derniers jours",
+        "sous_7j": "survole une barre pour le détail",
+        "auj_court": "Auj.",
+        "axe_heure": "{h} h",
+        "bulle_heure": "{h} h – {h2} h : {d}",
+        "historique": "Historique",
+        "reglages": "Réglages",
+        "quitter": "Quitter",
+        "note": "Fermer la fenêtre la réduit, le suivi continue. « Quitter » arrête tout.",
+        "cafe": "☕ Offre-moi un café via PayPal",
+        "erreur_sauvegarde": "Impossible d'enregistrer les données : {e}",
+        "titre_pause": "{d} (en pause)",
+        "fichier_illisible": "Le fichier de données n'a pas pu être lu ({e}).\n\nIl a été mis de côté ici :\n{copie}",
+        "info_reduction": "Temps PC continue de compter, réduit dans la barre des tâches.\n\n"
+                          "Pour l'arrêter complètement, utilise le bouton « Quitter ».",
+        "confirmer_quitter": "Quitter Temps PC ?\n\nLe temps ne sera plus compté tant que l'application est fermée.",
+        "proposer_demarrage": "Lancer Temps PC automatiquement à chaque démarrage de l'ordinateur ?\n\n"
+                              "C'est recommandé : le temps n'est compté que lorsque l'application est ouverte.\n"
+                              "(Tu peux changer ça plus tard dans Réglages.)",
+        "erreur_demarrage": "Impossible d'activer le démarrage automatique :\n{e}",
+        "export_titre": "Exporter l'historique",
+        "export_type": "Fichier CSV",
+        "export_colonnes": ["Date", "Jour", "Minutes actives", "Durée", "Première activité", "Dernière activité"],
+        "export_separateur": ";",
+        "export_erreur": "Export impossible :\n{e}",
+        "export_ok": "Historique exporté :\n{chemin}",
+        "titre_reglages": "Réglages",
+        "case_pause": "Mettre le compteur en pause quand je n'utilise pas le PC",
+        "apres": "après",
+        "minutes_sans": "minutes sans souris ni clavier",
+        "astuce": "Astuce : décoche cette option si tu veux aussi compter les films ou vidéos regardés "
+                  "sans toucher au PC.",
+        "pas_detection": "La détection d'inactivité n'est pas disponible sur ce système : "
+                         "tout le temps où l'application est ouverte est compté.",
+        "case_demarrage": "Lancer Temps PC au démarrage de l'ordinateur",
+        "langue_auto": "Automatique ({nom})",
+        "donnees_dans": "Données enregistrées dans :",
+        "ouvrir_dossier": "Ouvrir le dossier",
+        "enregistrer": "Enregistrer",
+        "annuler": "Annuler",
+        "erreur_dossier": "Impossible d'ouvrir le dossier :\n{e}",
+        "erreur_minutes": "Indique un nombre de minutes entre 1 et 120.",
+        "erreur_demarrage_modif": "Démarrage automatique non modifié :\n{e}",
+        "titre_historique": "Historique",
+        "jours_enregistres_1": "{n} jour enregistré",
+        "jours_enregistres_n": "{n} jours enregistrés",
+        "resume": "{jours} · moyenne {m} par jour · total {t}",
+        "aucune_donnee": "Aucune donnée pour l'instant.",
+        "titre_12m": "Les 12 derniers mois",
+        "sous_12m": "clique sur un mois pour le détail",
+        "nb_jours_1": "{n} jour",
+        "nb_jours_n": "{n} jours",
+        "bulle_mois_detail": " · {jours} · moy. {m}/jour",
+        "titre_jpj": "Jour par jour",
+        "sous_jpj": "temps actif",
+        "exporter_tout": "Exporter tout en CSV (Excel)…",
+        "fermer": "Fermer",
+        "col_date": "Date", "col_jour": "Jour", "col_temps": "Temps actif", "col_debut": "Début", "col_fin": "Fin",
+        "jours_utilises_1": "{n} jour utilisé",
+        "jours_utilises_n": "{n} jours utilisés",
+        "detail1": "{t} au total · {jours} · moyenne {m} par jour",
+        "detail2": "Jour record : {date}, {d}",
+        "aucune_donnee_mois": "Aucune donnée pour ce mois.",
+    },
+    "en": {
+        "jours": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+        "jours_courts": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        "mois": ["January", "February", "March", "April", "May", "June", "July",
+                 "August", "September", "October", "November", "December"],
+        "mois_courts": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+        "date_longue": "{jour}, {mois} {n}",
+        "mois_annee": "{mois} {a}",
+        "date_tableau": "%Y-%m-%d",
+        "deux_points": ": ",
+        "aujourdhui_date": "Today · {date}",
+        "actif": "Active",
+        "en_pause": "Paused",
+        "inactif_depuis": "idle for {d}",
+        "premiere_activite": "First activity at {h}",
+        "moyenne_7": "average over the previous 7 days: {d}",
+        "demarre": "The counter is starting: just use your PC as usual.",
+        "titre_heures": "Today, hour by hour",
+        "sous_heures": "active minutes",
+        "titre_7j": "The last 7 days",
+        "sous_7j": "hover over a bar for details",
+        "auj_court": "Today",
+        "axe_heure": "{h}h",
+        "bulle_heure": "{h}:00 – {h2}:00: {d}",
+        "historique": "History",
+        "reglages": "Settings",
+        "quitter": "Quit",
+        "note": "Closing the window just minimizes it. “Quit” stops tracking.",
+        "cafe": "☕ Buy me a coffee via PayPal",
+        "erreur_sauvegarde": "Could not save the data: {e}",
+        "titre_pause": "{d} (paused)",
+        "fichier_illisible": "The data file could not be read ({e}).\n\nIt has been set aside here:\n{copie}",
+        "info_reduction": "Temps PC keeps counting, minimized to the taskbar.\n\n"
+                          "To stop it completely, use the “Quit” button.",
+        "confirmer_quitter": "Quit Temps PC?\n\nTime will not be counted while the app is closed.",
+        "proposer_demarrage": "Start Temps PC automatically every time the computer starts?\n\n"
+                              "Recommended: time is only counted while the app is open.\n"
+                              "(You can change this later in Settings.)",
+        "erreur_demarrage": "Could not enable automatic startup:\n{e}",
+        "export_titre": "Export history",
+        "export_type": "CSV file",
+        "export_colonnes": ["Date", "Day", "Active minutes", "Duration", "First activity", "Last activity"],
+        "export_separateur": ",",
+        "export_erreur": "Export failed:\n{e}",
+        "export_ok": "History exported:\n{chemin}",
+        "titre_reglages": "Settings",
+        "case_pause": "Pause the counter when I'm not using the PC",
+        "apres": "after",
+        "minutes_sans": "minutes without mouse or keyboard",
+        "astuce": "Tip: uncheck this if you also want to count movies or videos watched without "
+                  "touching the PC.",
+        "pas_detection": "Idle detection is not available on this system: "
+                         "all the time the app is open is counted.",
+        "case_demarrage": "Start Temps PC when the computer starts",
+        "langue_auto": "Automatic ({nom})",
+        "donnees_dans": "Data saved in:",
+        "ouvrir_dossier": "Open folder",
+        "enregistrer": "Save",
+        "annuler": "Cancel",
+        "erreur_dossier": "Could not open the folder:\n{e}",
+        "erreur_minutes": "Enter a number of minutes between 1 and 120.",
+        "erreur_demarrage_modif": "Automatic startup not changed:\n{e}",
+        "titre_historique": "History",
+        "jours_enregistres_1": "{n} day recorded",
+        "jours_enregistres_n": "{n} days recorded",
+        "resume": "{jours} · average {m} per day · total {t}",
+        "aucune_donnee": "No data yet.",
+        "titre_12m": "The last 12 months",
+        "sous_12m": "click a month for details",
+        "nb_jours_1": "{n} day",
+        "nb_jours_n": "{n} days",
+        "bulle_mois_detail": " · {jours} · avg {m}/day",
+        "titre_jpj": "Day by day",
+        "sous_jpj": "active time",
+        "exporter_tout": "Export all to CSV (Excel)…",
+        "fermer": "Close",
+        "col_date": "Date", "col_jour": "Day", "col_temps": "Active time", "col_debut": "Start", "col_fin": "End",
+        "jours_utilises_1": "{n} day used",
+        "jours_utilises_n": "{n} days used",
+        "detail1": "{t} in total · {jours} · average {m} per day",
+        "detail2": "Record day: {date}, {d}",
+        "aucune_donnee_mois": "No data for this month.",
+    },
+}
+NOMS_LANGUES = {"fr": "Français", "en": "English"}
+LANGUE = "fr"
+
+
+def langue_systeme() -> str:
+    """'fr' si Windows (ou le systeme) est en francais, sinon 'en'."""
+    try:
+        if WIN:
+            return "fr" if (ctypes.windll.kernel32.GetUserDefaultUILanguage() & 0x3FF) == 0x0C else "en"
+        import locale
+        loc = os.environ.get("LC_ALL") or os.environ.get("LC_MESSAGES") or os.environ.get("LANG") \
+            or (locale.getlocale()[0] or "")
+        return "fr" if loc.lower().startswith("fr") else "en"
+    except Exception:
+        return "fr"
+
+
+def definir_langue(langue: str) -> None:
+    global LANGUE
+    LANGUE = langue if langue in TEXTES else "fr"
+
+
+def ouvrir_paypal(montant: int | None = None) -> None:
+    """Page PayPal.me (dans le navigateur), avec le montant deja rempli si on l'a choisi."""
+    try:
+        webbrowser.open(f"{PAYPAL}/{montant}EUR" if montant else PAYPAL)
+    except Exception:
+        pass
+
+
+def choisir_langue(reglage: str | None) -> str:
+    force = os.environ.get("TEMPS_PC_LANGUE")
+    if force in TEXTES:
+        return force
+    return reglage if reglage in TEXTES else langue_systeme()
+
+
+def t(cle: str, **kw):
+    val = TEXTES[LANGUE].get(cle, TEXTES["fr"].get(cle, cle))
+    return val.format(**kw) if kw and isinstance(val, str) else val
+
+
+def pluriel(n: int, cle: str) -> str:
+    return t(f"{cle}_{'1' if n == 1 else 'n'}", n=n)
+
+
+def majuscule(texte: str) -> str:
+    return texte[:1].upper() + texte[1:]
+
+
+def nom_jour(dt: date) -> str:
+    return t("jours")[dt.weekday()]
+
+
+def nom_mois(m: int) -> str:
+    return t("mois")[m - 1]
+
+
+def date_longue(dt: date, maj: bool = False) -> str:
+    texte = t("date_longue", jour=nom_jour(dt), n=dt.day, mois=nom_mois(dt.month))
+    return majuscule(texte) if maj else texte
+
+
+def mois_annee(a: int, m: int) -> str:
+    return t("mois_annee", mois=majuscule(nom_mois(m)), a=a)
+
+
+def insecables(texte: str) -> str:
+    """Evite de couper « 5 h 28 » ou « 12 min » en fin de ligne."""
+    return texte.replace(" h ", "\u00a0h\u00a0").replace(" min", "\u00a0min").replace("à ", "à\u00a0")
 
 POLICE = "Segoe UI" if WIN else ("Helvetica Neue" if MAC else "DejaVu Sans")
 
@@ -64,13 +305,13 @@ THEMES = {
                   barre_actif="#1f9d4a", passee_actif="#6fc28c",
                   barre_pause="#8a8984", passee_pause="#bdbcb6", actif="#1f9d4a",
                   bouton="#ecebe7", bouton_survol="#dfded9", bulle="#262624",
-                  bulle_texte="#fcfcfb", survol_col="#f1f0ec"),
+                  bulle_texte="#fcfcfb", survol_col="#f1f0ec", copyright="#c9c8c2"),
     "sombre": dict(fond="#1a1a19", carte="#252524", texte="#f0efec", texte2="#c3c2b7",
                    discret="#8f8e86", grille="#2c2c2a", axe="#4a4a47",
                    barre_actif="#34b864", passee_actif="#22703f",
                    barre_pause="#8f8e86", passee_pause="#4a4a47", actif="#34b864",
                    bouton="#2b2b29", bouton_survol="#373734", bulle="#f0efec",
-                   bulle_texte="#1a1a19", survol_col="#242423"),
+                   bulle_texte="#1a1a19", survol_col="#242423", copyright="#4a4a46"),
 }
 
 
@@ -266,7 +507,7 @@ class Donnees:
     def __init__(self, dossier: str) -> None:
         self.dossier = dossier
         self.chemin = os.path.join(dossier, "donnees.json")
-        self.avertissement: str | None = None
+        self.erreur_lecture: tuple[str, str] | None = None
         self.jours: dict[str, dict] = {}
         self.reglages = dict(REGLAGES_DEFAUT)
         self._sauvegarde_faite: str | None = None
@@ -294,8 +535,13 @@ class Donnees:
                 os.replace(self.chemin, copie)
             except OSError:
                 copie = self.chemin
-            self.avertissement = ("Le fichier de données n'a pas pu être lu "
-                                  f"({e}).\n\nIl a été mis de côté ici :\n{copie}")
+            self.erreur_lecture = (str(e), copie)
+
+    @property
+    def avertissement(self) -> str | None:
+        if not self.erreur_lecture:
+            return None
+        return t("fichier_illisible", e=self.erreur_lecture[0], copie=self.erreur_lecture[1])
 
     def sauvegarde_du_jour(self) -> None:
         """Copie de securite de donnees.json, avant toute ecriture : une par jour (les
@@ -783,6 +1029,18 @@ def _vers_photo(root: tk.Misc, grille: list[list]) -> tk.PhotoImage:
     return img
 
 
+class BoutonCafe(tk.Label):
+    """Petit bouton jaune « 2 € » qui ouvre PayPal avec ce montant."""
+    JAUNE, JAUNE_SURVOL = "#facc15", "#eab308"
+
+    def __init__(self, master, montant: int, app: "Application") -> None:
+        super().__init__(master, text=f"{montant} €", bg=self.JAUNE, fg="#1a1a19",
+                         font=(POLICE, 9, "bold"), padx=app.px(8), pady=app.px(1), cursor="hand2")
+        self.bind("<Enter>", lambda e: self.config(bg=self.JAUNE_SURVOL))
+        self.bind("<Leave>", lambda e: self.config(bg=self.JAUNE))
+        self.bind("<Button-1>", lambda e: ouvrir_paypal(montant))
+
+
 def icones_temps(root: tk.Misc, secondes: float, actif: bool) -> list[tk.PhotoImage]:
     """Icones (64, 48, 32, 24, 16 px) affichant le temps : '5h' au-dessus de '28'."""
     m = int(max(0, secondes) // 60)
@@ -803,6 +1061,7 @@ class Application:
         self.det = detecteur
         self.serveur = serveur
         self.compteur = Compteur(donnees, detecteur)
+        definir_langue(choisir_langue(donnees.reglages.get("langue")))
         self.th = THEMES["sombre" if theme_sombre() else "clair"]
         self.echelle = max(1.0, root.winfo_fpixels("1i") / 96.0)
         self.derniere_sauvegarde = time.time()
@@ -811,7 +1070,7 @@ class Application:
         th = self.th
         root.title(APP_NOM)
         root.configure(bg=th["fond"])
-        self._dimensionner(root, 520, 680, 440, 640)
+        self._dimensionner(root, 520, 712, 440, 670)
         root.protocol("WM_DELETE_WINDOW", self.reduire)
         self._icones: list[tk.PhotoImage] = []
         self._etat_icone = None
@@ -897,24 +1156,35 @@ class Application:
             self.lbl_note.config(wraplength=largeur)
         cadre.bind("<Configure>", ajuster)
 
-        self._titre(cadre, "Aujourd'hui, heure par heure", "minutes actives")
+        self._titre(cadre, t("titre_heures"), t("sous_heures"))
         self.graph_heures = Graphique(cadre, self, 150, 0.7)
         self.graph_heures.pack(fill="x")
 
-        self._titre(cadre, "Les 7 derniers jours", "survole une barre pour le détail")
+        self._titre(cadre, t("titre_7j"), t("sous_7j"))
         self.graph_jours = Graphique(cadre, self, 170, 0.56)
         self.graph_jours.pack(fill="x")
 
         bas = tk.Frame(cadre, bg=th["fond"])
         bas.pack(side="bottom", fill="x", pady=(px(16), 0))
+        # Derniere ligne : « offre-moi un cafe » (PayPal) et le copyright, tout petit
+        pied = tk.Frame(bas, bg=th["fond"])
+        pied.pack(side="bottom", fill="x", pady=(px(12), 0))
+        cafe = tk.Label(pied, text=t("cafe"), bg=th["fond"], fg=th["texte2"], font=(POLICE, 9),
+                        cursor="hand2")
+        cafe.pack(side="left")
+        cafe.bind("<Button-1>", lambda e: ouvrir_paypal())
+        for montant in (2, 5, 10):
+            BoutonCafe(pied, montant, self).pack(side="left", padx=(px(6), 0))
+        tk.Label(pied, text=COPYRIGHT, bg=th["fond"], fg=th["copyright"], font=(POLICE, 7)).pack(
+            side="right", anchor="s")
         self.lbl_note = tk.Label(bas, bg=th["fond"], fg=th["discret"], font=(POLICE, 9),
                                  anchor="w", justify="left")
         self.lbl_note.pack(side="bottom", fill="x", pady=(px(10), 0))
         boutons = tk.Frame(bas, bg=th["fond"])
         boutons.pack(side="bottom", fill="x")
-        Bouton(boutons, "Historique", self.ouvrir_historique, self).pack(side="left")
-        Bouton(boutons, "Réglages", self.ouvrir_reglages, self).pack(side="left", padx=(px(8), 0))
-        Bouton(boutons, "Quitter", self.quitter, self).pack(side="right")
+        Bouton(boutons, t("historique"), self.ouvrir_historique, self).pack(side="left")
+        Bouton(boutons, t("reglages"), self.ouvrir_reglages, self).pack(side="left", padx=(px(8), 0))
+        Bouton(boutons, t("quitter"), self.quitter, self).pack(side="right")
 
     def _titre(self, parent, texte: str, sous_titre: str) -> None:
         th, px = self.th, self.px
@@ -940,7 +1210,7 @@ class Application:
             self.d.enregistrer()
             self.erreur_sauvegarde = None
         except OSError as e:
-            self.erreur_sauvegarde = f"Impossible d'enregistrer les données : {e}"
+            self.erreur_sauvegarde = t("erreur_sauvegarde", e=e)
 
     def _ecouter(self) -> None:
         if self.serveur:
@@ -970,30 +1240,28 @@ class Application:
         j = self.d.jours.get(cle)
         total = self.d.total(cle)
 
-        self.lbl_date.config(text=f"Aujourd'hui · {JOURS[auj.weekday()]} {auj.day} {MOIS[auj.month - 1]}")
+        self.lbl_date.config(text=t("aujourdhui_date", date=date_longue(auj)))
         self.lbl_total.config(text=duree(total))
         self._maj_icone(total)
 
         if self.compteur.actif:
             self.lbl_point.config(fg=th["actif"])
-            self.lbl_statut.config(text="Actif")
+            self.lbl_statut.config(text=t("actif"))
             self.lbl_statut2.config(text="")
         else:
             self.lbl_point.config(fg=th["barre_pause"])
-            self.lbl_statut.config(text="En pause")
-            self.lbl_statut2.config(text=f"inactif depuis {duree(self.compteur.inactif_depuis)}")
+            self.lbl_statut.config(text=t("en_pause"))
+            self.lbl_statut2.config(text=t("inactif_depuis", d=duree(self.compteur.inactif_depuis)))
 
         infos = []
         if j and j.get("premiere"):
-            infos.append(f"Première activité à {j['premiere']}")
+            infos.append(t("premiere_activite", h=j["premiere"]))
         passes = [self.d.total((auj - timedelta(days=k)).isoformat()) for k in range(1, 8)]
         passes = [v for v in passes if v >= 60]
         if passes:
-            infos.append(f"moyenne des 7 jours précédents : {duree_courte(sum(passes) / len(passes))}")
-        infos = [i.replace(" h ", "\u00a0h\u00a0").replace(" min", "\u00a0min").replace("à ", "à\u00a0")
-                 for i in infos]
-        txt = " · ".join(infos) or "Le compteur démarre : utilise ton PC normalement."
-        self.lbl_info.config(text=txt[0].upper() + txt[1:])
+            infos.append(t("moyenne_7", d=duree_courte(sum(passes) / len(passes))))
+        txt = " · ".join(insecables(i) for i in infos) or t("demarre")
+        self.lbl_info.config(text=majuscule(txt))
 
         # Vert quand on est actif, gris quand le compteur est en pause
         etat = "actif" if self.compteur.actif else "pause"
@@ -1001,8 +1269,8 @@ class Application:
 
         # Heure par heure
         heures = j["heures"] if j else [0.0] * 24
-        barres_h = [Barre(v, f"{h} h" if h % 6 == 0 else "",
-                          f"{h} h – {h + 1} h : {duree(v)}", couleur) for h, v in enumerate(heures)]
+        barres_h = [Barre(v, t("axe_heure", h=h) if h % 6 == 0 else "",
+                          t("bulle_heure", h=h, h2=h + 1, d=duree(v)), couleur) for h, v in enumerate(heures)]
         self.graph_heures.maj(barres_h, 3600.0, [(1800, "30 min"), (3600, "60 min")])
 
         # 7 derniers jours
@@ -1012,15 +1280,13 @@ class Application:
             jr = auj - timedelta(days=k)
             v = self.d.total(jr.isoformat())
             valeurs.append(v)
-            nom = f"{JOURS[jr.weekday()].capitalize()} {jr.day} {MOIS[jr.month - 1]}"
             barres_j.append(Barre(
-                v, "Auj." if k == 0 else f"{JOURS_COURTS[jr.weekday()]} {jr.day}",
-                f"{nom} : {duree(v)}", couleur if k == 0 else couleur_passee,
+                v, t("auj_court") if k == 0 else f"{t('jours_courts')[jr.weekday()]} {jr.day}",
+                date_longue(jr, True) + t("deux_points") + duree(v), couleur if k == 0 else couleur_passee,
                 fort=(k == 0), etiquette=duree_courte(v) if k == 0 else None))
         self.graph_jours.maj(barres_j, *echelle_heures(max(valeurs)))
 
-        note = self.erreur_sauvegarde or (
-            "Fermer la fenêtre la réduit, le suivi continue. « Quitter » arrête tout.")
+        note = self.erreur_sauvegarde or t("note")
         self.lbl_note.config(text=note, fg="#d03b3b" if self.erreur_sauvegarde else th["discret"])
 
         if self.historique:
@@ -1035,14 +1301,29 @@ class Application:
         if etat == self._etat_icone:
             return
         self._etat_icone = etat
-        titre = f"{duree_courte(total)} – {APP_NOM}"
-        self.root.title(titre if self.compteur.actif else f"{duree_courte(total)} (en pause) – {APP_NOM}")
+        temps = duree_courte(total) if self.compteur.actif else t("titre_pause", d=duree_courte(total))
+        self.root.title(f"{temps} – {APP_NOM}")
         try:
             icones = icones_temps(self.root, total, self.compteur.actif)
             self.root.iconphoto(True, *icones)
             self._icones = icones  # garder une reference, sinon Tk efface les images
         except tk.TclError:
             pass
+
+    def reconstruire(self) -> None:
+        """Refait l'interface dans la nouvelle langue (les donnees ne bougent pas)."""
+        historique_ouvert = bool(self.historique and self.historique.f.winfo_exists())
+        if historique_ouvert:
+            self.historique.f.destroy()
+            self.historique = None
+        for w in self.root.winfo_children():
+            if not isinstance(w, tk.Toplevel):
+                w.destroy()
+        self._construire()
+        self._etat_icone = None
+        self.rafraichir()
+        if historique_ouvert:
+            self.ouvrir_historique()
 
     # ---- actions ------------------------------------------------------------
     def montrer(self) -> None:
@@ -1059,14 +1340,11 @@ class Application:
         if not self.d.reglages.get("info_reduction_vue"):
             self.d.reglages["info_reduction_vue"] = True
             self._sauver()
-            messagebox.showinfo(APP_NOM, "Temps PC continue de compter, réduit dans la barre des tâches.\n\n"
-                                         "Pour l'arrêter complètement, utilise le bouton « Quitter ».",
-                                parent=self.root)
+            messagebox.showinfo(APP_NOM, t("info_reduction"), parent=self.root)
         self.root.iconify()
 
     def quitter(self) -> None:
-        if not messagebox.askyesno(APP_NOM, "Quitter Temps PC ?\n\nLe temps ne sera plus compté "
-                                            "tant que l'application est fermée.", parent=self.root):
+        if not messagebox.askyesno(APP_NOM, t("confirmer_quitter"), parent=self.root):
             return
         self._sauver()
         if self.serveur:
@@ -1078,16 +1356,11 @@ class Application:
 
     def _proposer_demarrage(self) -> None:
         self.d.reglages["question_demarrage_posee"] = True
-        if messagebox.askyesno(
-                APP_NOM,
-                "Lancer Temps PC automatiquement à chaque démarrage de l'ordinateur ?\n\n"
-                "C'est recommandé : le temps n'est compté que lorsque l'application est ouverte.\n"
-                "(Tu peux changer ça plus tard dans Réglages.)", parent=self.root):
+        if messagebox.askyesno(APP_NOM, t("proposer_demarrage"), parent=self.root):
             try:
                 Demarrage.regler(True)
             except OSError as e:
-                messagebox.showerror(APP_NOM, f"Impossible d'activer le démarrage automatique :\n{e}",
-                                     parent=self.root)
+                messagebox.showerror(APP_NOM, t("erreur_demarrage", e=e), parent=self.root)
         self._sauver()
 
     def _fenetre(self, titre: str, l: int | None = None, h: int | None = None) -> tk.Toplevel:
@@ -1108,28 +1381,27 @@ class Application:
         self.historique = FenetreHistorique(self)
 
     def _exporter(self, parent, jours) -> None:
-        chemin = filedialog.asksaveasfilename(parent=parent, title="Exporter l'historique",
+        chemin = filedialog.asksaveasfilename(parent=parent, title=t("export_titre"),
                                               defaultextension=".csv", initialfile="temps_pc.csv",
-                                              filetypes=[("Fichier CSV", "*.csv")])
+                                              filetypes=[(t("export_type"), "*.csv")])
         if not chemin:
             return
         try:
             with open(chemin, "w", newline="", encoding="utf-8-sig") as fh:
-                w = csv.writer(fh, delimiter=";")
-                w.writerow(["Date", "Jour", "Minutes actives", "Durée", "Première activité",
-                            "Dernière activité"])
+                w = csv.writer(fh, delimiter=t("export_separateur"))
+                w.writerow(t("export_colonnes"))
                 for k, v in sorted(jours):
-                    t = sum(v["heures"])
-                    w.writerow([k, JOURS[date.fromisoformat(k).weekday()], round(t / 60),
-                                duree_courte(t), v.get("premiere") or "", v.get("derniere") or ""])
+                    tot = sum(v["heures"])
+                    w.writerow([k, nom_jour(date.fromisoformat(k)), round(tot / 60),
+                                duree_courte(tot), v.get("premiere") or "", v.get("derniere") or ""])
         except OSError as e:
-            messagebox.showerror(APP_NOM, f"Export impossible :\n{e}", parent=parent)
+            messagebox.showerror(APP_NOM, t("export_erreur", e=e), parent=parent)
             return
-        messagebox.showinfo(APP_NOM, f"Historique exporté :\n{chemin}", parent=parent)
+        messagebox.showinfo(APP_NOM, t("export_ok", chemin=chemin), parent=parent)
 
     def ouvrir_reglages(self) -> None:
         th, px = self.th, self.px
-        f = self._fenetre(f"{APP_NOM} – Réglages")
+        f = self._fenetre(f"{APP_NOM} – {t('titre_reglages')}")
         f.resizable(False, False)
         cadre = tk.Frame(f, bg=th["fond"], padx=px(20), pady=px(18))
         cadre.pack(fill="both", expand=True)
@@ -1141,6 +1413,8 @@ class Application:
         except OSError:
             demarrage_avant = False
         v_dem = tk.BooleanVar(value=demarrage_avant)
+        langue_avant = r.get("langue") if r.get("langue") in TEXTES else "auto"
+        v_langue = tk.StringVar(value=langue_avant)
 
         def case(texte, var):
             return tk.Checkbutton(cadre, text=texte, variable=var, bg=th["fond"], fg=th["texte"],
@@ -1149,27 +1423,35 @@ class Application:
                                   font=(POLICE, 10), anchor="w", justify="left",
                                   wraplength=px(420))
 
-        case("Mettre le compteur en pause quand je n'utilise pas le PC", v_pause).pack(fill="x")
+        case(t("case_pause"), v_pause).pack(fill="x")
         ligne = tk.Frame(cadre, bg=th["fond"])
         ligne.pack(fill="x", padx=(px(26), 0), pady=(px(4), 0))
-        tk.Label(ligne, text="après", bg=th["fond"], fg=th["texte2"], font=(POLICE, 10)).pack(side="left")
+        tk.Label(ligne, text=t("apres"), bg=th["fond"], fg=th["texte2"], font=(POLICE, 10)).pack(side="left")
         tk.Spinbox(ligne, from_=1, to=120, width=4, textvariable=v_min, font=(POLICE, 10),
                    bg=th["carte"], fg=th["texte"], buttonbackground=th["bouton"],
                    insertbackground=th["texte"], relief="flat", justify="center").pack(
             side="left", padx=px(6))
-        tk.Label(ligne, text="minutes sans souris ni clavier", bg=th["fond"], fg=th["texte2"],
+        tk.Label(ligne, text=t("minutes_sans"), bg=th["fond"], fg=th["texte2"],
                  font=(POLICE, 10)).pack(side="left")
-        aide = ("Astuce : décoche cette option si tu veux aussi compter les films ou vidéos "
-                "regardés sans toucher au PC.")
-        if self.det.methode is None:
-            aide = ("La détection d'inactivité n'est pas disponible sur ce système : "
-                    "tout le temps où l'application est ouverte est compté.")
+        aide = t("astuce") if self.det.methode is not None else t("pas_detection")
         tk.Label(cadre, text=aide, bg=th["fond"], fg=th["discret"], font=(POLICE, 9), anchor="w",
                  justify="left", wraplength=px(420)).pack(fill="x", padx=(px(26), 0), pady=(px(6), 0))
 
-        case("Lancer Temps PC au démarrage de l'ordinateur", v_dem).pack(fill="x", pady=(px(18), 0))
+        case(t("case_demarrage"), v_dem).pack(fill="x", pady=(px(18), 0))
 
-        tk.Label(cadre, text="Données enregistrées dans :", bg=th["fond"], fg=th["texte2"],
+        # Langue (toujours ecrit dans les deux langues, pour s'y retrouver)
+        tk.Label(cadre, text="Langue / Language", bg=th["fond"], fg=th["texte2"], font=(POLICE, 10),
+                 anchor="w").pack(fill="x", pady=(px(18), 0))
+        choix_langue = tk.Frame(cadre, bg=th["fond"])
+        choix_langue.pack(fill="x", padx=(px(20), 0), pady=(px(2), 0))
+        for valeur, libelle in (("auto", t("langue_auto", nom=NOMS_LANGUES[langue_systeme()])),
+                                ("fr", NOMS_LANGUES["fr"]), ("en", NOMS_LANGUES["en"])):
+            tk.Radiobutton(choix_langue, text=libelle, value=valeur, variable=v_langue, bg=th["fond"],
+                           fg=th["texte"], activebackground=th["fond"], activeforeground=th["texte"],
+                           selectcolor=th["carte"], highlightthickness=0, bd=0,
+                           font=(POLICE, 10)).pack(side="left", padx=(0, px(14)))
+
+        tk.Label(cadre, text=t("donnees_dans"), bg=th["fond"], fg=th["texte2"],
                  font=(POLICE, 10), anchor="w").pack(fill="x", pady=(px(18), 0))
         tk.Label(cadre, text=self.d.chemin, bg=th["fond"], fg=th["discret"], font=(POLICE, 9),
                  anchor="w", justify="left", wraplength=px(420)).pack(fill="x")
@@ -1178,7 +1460,7 @@ class Application:
             try:
                 ouvrir_dossier(self.d.dossier)
             except Exception as e:
-                messagebox.showerror(APP_NOM, f"Impossible d'ouvrir le dossier :\n{e}", parent=f)
+                messagebox.showerror(APP_NOM, t("erreur_dossier", e=e), parent=f)
 
         def valider():
             try:
@@ -1186,7 +1468,7 @@ class Application:
                 if not 1 <= minutes <= 120:
                     raise ValueError
             except ValueError:
-                messagebox.showerror(APP_NOM, "Indique un nombre de minutes entre 1 et 120.", parent=f)
+                messagebox.showerror(APP_NOM, t("erreur_minutes"), parent=f)
                 return
             r["pause_si_inactif"] = bool(v_pause.get())
             r["minutes_inactivite"] = minutes
@@ -1194,16 +1476,25 @@ class Application:
                 try:
                     Demarrage.regler(bool(v_dem.get()))
                 except OSError as e:
-                    messagebox.showerror(APP_NOM, f"Démarrage automatique non modifié :\n{e}", parent=f)
+                    messagebox.showerror(APP_NOM, t("erreur_demarrage_modif", e=e), parent=f)
+            nouvelle = v_langue.get()
+            if nouvelle == "auto":
+                r.pop("langue", None)
+            else:
+                r["langue"] = nouvelle
             self._sauver()
-            self.rafraichir()
             f.destroy()
+            if choisir_langue(r.get("langue")) != LANGUE:
+                definir_langue(choisir_langue(r.get("langue")))
+                self.reconstruire()
+            else:
+                self.rafraichir()
 
         bas = tk.Frame(cadre, bg=th["fond"])
         bas.pack(side="bottom", fill="x", pady=(px(20), 0))
-        Bouton(bas, "Ouvrir le dossier", ouvrir, self).pack(side="left")
-        Bouton(bas, "Enregistrer", valider, self).pack(side="right")
-        Bouton(bas, "Annuler", f.destroy, self).pack(side="right", padx=(0, px(8)))
+        Bouton(bas, t("ouvrir_dossier"), ouvrir, self).pack(side="left")
+        Bouton(bas, t("enregistrer"), valider, self).pack(side="right")
+        Bouton(bas, t("annuler"), f.destroy, self).pack(side="right", padx=(0, px(8)))
 
 
 # --------------------------------------------------------------------------
@@ -1219,7 +1510,7 @@ class FenetreHistorique:
         self.mois_affiches: list[tuple[int, int]] = []
         self._sig_table = None
 
-        self.f = f = app._fenetre(f"{APP_NOM} – Historique")
+        self.f = f = app._fenetre(f"{APP_NOM} – {t('titre_historique')}")
         app._dimensionner(f, 600, 780, 500, 560)
         f.bind("<Destroy>", self._ferme, add="+")
         f.bind("<Left>", lambda e: self.changer(-1))
@@ -1231,7 +1522,7 @@ class FenetreHistorique:
         self.lbl_resume = tk.Label(cadre, bg=th["fond"], fg=th["texte2"], font=(POLICE, 10), anchor="w")
         self.lbl_resume.pack(fill="x")
 
-        app._titre(cadre, "Les 12 derniers mois", "clique sur un mois pour le détail")
+        app._titre(cadre, t("titre_12m"), t("sous_12m"))
         self.g_mois = Graphique(cadre, app, 112 if petit else 132, 0.56, au_clic=self._clic_mois)
         self.g_mois.pack(fill="x")
 
@@ -1249,23 +1540,23 @@ class FenetreHistorique:
         cadre.bind("<Configure>", lambda e: self.lbl_detail.config(wraplength=max(200, e.width - px(40))),
                    add="+")
 
-        app._titre(cadre, "Jour par jour", "temps actif")
+        app._titre(cadre, t("titre_jpj"), t("sous_jpj"))
         self.g_jours = Graphique(cadre, app, 118 if petit else 150, 0.62, au_clic=self._clic_jour)
         self.g_jours.pack(fill="x")
 
         bas = tk.Frame(cadre, bg=th["fond"])
         bas.pack(side="bottom", fill="x", pady=(px(12), 0))
-        Bouton(bas, "Exporter tout en CSV (Excel)…", self._exporter, app).pack(side="left")
-        Bouton(bas, "Fermer", f.destroy, app).pack(side="right")
+        Bouton(bas, t("exporter_tout"), self._exporter, app).pack(side="left")
+        Bouton(bas, t("fermer"), f.destroy, app).pack(side="right")
 
         zone = tk.Frame(cadre, bg=th["fond"])
         zone.pack(fill="both", expand=True, pady=(px(14), 0))
         cols = ("date", "jour", "temps", "premiere", "derniere")
         self.arbre = ttk.Treeview(zone, columns=cols, show="headings", selectmode="browse", height=4)
-        for col, titre, larg, anc in (("date", "Date", 100, "w"), ("jour", "Jour", 90, "w"),
-                                      ("temps", "Temps actif", 110, "e"),
-                                      ("premiere", "Début", 70, "center"),
-                                      ("derniere", "Fin", 70, "center")):
+        for col, titre, larg, anc in (("date", t("col_date"), 100, "w"), ("jour", t("col_jour"), 90, "w"),
+                                      ("temps", t("col_temps"), 110, "e"),
+                                      ("premiere", t("col_debut"), 70, "center"),
+                                      ("derniere", t("col_fin"), 70, "center")):
             self.arbre.heading(col, text=titre, anchor=anc)
             self.arbre.column(col, width=px(larg), anchor=anc, stretch=True)
         defil = ttk.Scrollbar(zone, orient="vertical", command=self.arbre.yview)
@@ -1313,11 +1604,10 @@ class FenetreHistorique:
         totaux = [sum(j["heures"]) for j in jours.values() if sum(j["heures"]) >= 1]
         if totaux:
             n = len(totaux)
-            self.lbl_resume.config(text=f"{n} jour{'s' if n > 1 else ''} enregistré{'s' if n > 1 else ''}"
-                                        f" · moyenne {duree(sum(totaux) / n)} par jour"
-                                        f" · total {duree(sum(totaux))}")
+            self.lbl_resume.config(text=t("resume", jours=pluriel(n, "jours_enregistres"),
+                                          m=duree(sum(totaux) / n), t=duree(sum(totaux))))
         else:
-            self.lbl_resume.config(text="Aucune donnée pour l'instant.")
+            self.lbl_resume.config(text=t("aucune_donnee"))
 
         # 12 mois : se termine au mois courant, ou suit le mois choisi s'il est hors de la fenetre
         debut = mois_decale(*courant, -11)
@@ -1331,18 +1621,18 @@ class FenetreHistorique:
             tot, nb = par_mois.get(am, (0.0, 0))
             valeurs_m.append(tot)
             choisi = am == sel
-            bulle = f"{MOIS[am[1] - 1].capitalize()} {am[0]} : {duree(tot)}"
+            bulle = mois_annee(*am) + t("deux_points") + duree(tot)
             if nb:
-                bulle += f" · {nb} jour{'s' if nb > 1 else ''} · moy. {duree_courte(tot / nb)}/jour"
+                bulle += t("bulle_mois_detail", jours=pluriel(nb, "nb_jours"), m=duree_courte(tot / nb))
             etiquette = None
             if choisi and tot >= 60:
                 etiquette = f"{int(tot // 3600)} h" if tot >= 3600 else duree_courte(tot)
-            barres_m.append(Barre(tot, MOIS_COURTS[am[1] - 1], bulle,
+            barres_m.append(Barre(tot, t("mois_courts")[am[1] - 1], bulle,
                                   couleur if choisi else couleur_legere, fort=choisi, etiquette=etiquette))
         self.g_mois.maj(barres_m, *echelle_heures(max(valeurs_m), 3))
 
         # Navigation
-        self.lbl_mois.config(text=f"{MOIS[m - 1].capitalize()} {a}")
+        self.lbl_mois.config(text=mois_annee(a, m))
         self.b_prec.activer(sel > premier)
         self.b_suiv.activer(sel < dernier)
 
@@ -1361,13 +1651,12 @@ class FenetreHistorique:
                 axe = str(jour)
             else:
                 axe = ""
-            nom = f"{JOURS[dt.weekday()].capitalize()} {jour} {MOIS[m - 1]}"
-            bulle = f"{nom} : {duree(v)}"
+            bulle = date_longue(dt, True) + t("deux_points") + duree(v)
             if j and v >= 60 and j.get("premiere") and j.get("derniere"):
                 bulle += f" ({j['premiere']} – {j['derniere']})"
             barres_j.append(Barre(v, axe, bulle, couleur, fort=(jour == jour_auj)))
             if v >= 1:
-                lignes.append((dt.isoformat(), (dt.strftime("%d/%m/%Y"), JOURS[dt.weekday()].capitalize(),
+                lignes.append((dt.isoformat(), (dt.strftime(t("date_tableau")), majuscule(nom_jour(dt)),
                                                 duree(v), (j or {}).get("premiere") or "–",
                                                 (j or {}).get("derniere") or "–")))
         self.g_jours.maj(barres_j, *echelle_heures(max(valeurs_j)))
@@ -1376,14 +1665,11 @@ class FenetreHistorique:
         if tot >= 60 and nb:
             i_max = max(range(nb_jours), key=lambda k: valeurs_j[k])
             d_max = date(a, m, i_max + 1)
-            ligne1 = (f"{duree(tot)} au total · {nb} jour{'s' if nb > 1 else ''} utilisé{'s' if nb > 1 else ''}"
-                      f" · moyenne {duree_courte(tot / nb)} par jour")
-            ligne2 = (f"Jour record : {JOURS[d_max.weekday()]} {d_max.day} {MOIS[m - 1]},"
-                      f" {duree(valeurs_j[i_max])}")
-            detail = "\n".join(t.replace(" h ", "\u00a0h\u00a0").replace(" min", "\u00a0min")
-                               for t in (ligne1, ligne2))
+            ligne1 = t("detail1", t=duree(tot), jours=pluriel(nb, "jours_utilises"), m=duree_courte(tot / nb))
+            ligne2 = t("detail2", date=date_longue(d_max), d=duree(valeurs_j[i_max]))
+            detail = insecables(ligne1) + "\n" + insecables(ligne2)
         else:
-            detail = "Aucune donnée pour ce mois."
+            detail = t("aucune_donnee_mois")
         self.lbl_detail.config(text=detail)
 
         # Tableau du mois (reconstruit seulement s'il a change)
