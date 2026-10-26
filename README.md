@@ -32,7 +32,7 @@ Seul le temps **actif** est compté : après quelques minutes sans souris ni cla
 
 ## Installation
 
-1. **[Télécharge PCTime.zip](https://github.com/vincentschoebrechts-beep/temps-pc/raw/main/telechargement/PCTime.zip)** (Windows 10/11, 64 bits, environ 10 Mo).
+1. **[Télécharge PCTime.zip](https://github.com/vincentschoebrechts-beep/pc-time/raw/main/telechargement/PCTime.zip)** (Windows 10/11, 64 bits, environ 10 Mo).
 2. Clic droit sur le zip → **Extraire tout…**, puis place le dossier `PCTime` là où il restera (par ex. Documents).
 3. Double-clique sur `PCTime.exe`. Rien d'autre à installer.
 
@@ -82,7 +82,7 @@ Only **active** time counts: after a few minutes without mouse or keyboard, the 
 
 ### Install
 
-1. **[Download PCTime.zip](https://github.com/vincentschoebrechts-beep/temps-pc/raw/main/telechargement/PCTime.zip)** (Windows 10/11, 64-bit, about 10 MB).
+1. **[Download PCTime.zip](https://github.com/vincentschoebrechts-beep/pc-time/raw/main/telechargement/PCTime.zip)** (Windows 10/11, 64-bit, about 10 MB).
 2. Right-click the zip → **Extract All…**, then put the `PCTime` folder where it will stay (e.g. Documents).
 3. Double-click `PCTime.exe`. Nothing else to install.
 
