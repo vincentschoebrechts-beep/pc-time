@@ -1,10 +1,12 @@
 <img src="captures/icone.png" width="64" align="right" alt="">
 
-# Temps PC
+# PC Time
+
+**Screen time for your Windows PC · Le temps d'écran de ton PC**
 
 **Français** · [English](#english)
 
-Petite application Windows gratuite qui compte le temps passé **chaque jour** sur l'ordinateur, comme le « temps d'écran » d'un téléphone.
+Petite application Windows gratuite qui compte le temps passé **chaque jour** sur l'ordinateur, comme le « temps d'écran » d'un téléphone. (Anciennement « Temps PC ».)
 
 Seul le temps **actif** est compté : après quelques minutes sans souris ni clavier, le compteur se met en pause et retire ces minutes d'inactivité. La veille du PC n'est pas comptée non plus.
 
@@ -30,13 +32,13 @@ Seul le temps **actif** est compté : après quelques minutes sans souris ni cla
 
 ## Installation
 
-1. **[Télécharge TempsPC.zip](https://github.com/vincentschoebrechts-beep/temps-pc/raw/main/telechargement/TempsPC.zip)** (Windows 10/11, 64 bits, environ 10 Mo).
-2. Clic droit sur le zip → **Extraire tout…**, puis place le dossier `TempsPC` là où il restera (par ex. Documents).
-3. Double-clique sur `TempsPC.exe`. Rien d'autre à installer.
+1. **[Télécharge PCTime.zip](https://github.com/vincentschoebrechts-beep/temps-pc/raw/main/telechargement/PCTime.zip)** (Windows 10/11, 64 bits, environ 10 Mo).
+2. Clic droit sur le zip → **Extraire tout…**, puis place le dossier `PCTime` là où il restera (par ex. Documents).
+3. Double-clique sur `PCTime.exe`. Rien d'autre à installer.
 
 L'exe n'est pas signé : Windows peut afficher « Windows a protégé votre ordinateur ». Clique sur **Informations complémentaires**, puis **Exécuter quand même**.
 
-**Mise à jour :** dans Temps PC, clique sur **Quitter**, remplace l'ancien `TempsPC.exe` par le nouveau **au même endroit** (pour garder le démarrage automatique), puis relance-le. Les données sont conservées.
+**Mise à jour (aussi depuis Temps PC) :** dans l'appli, clique sur **Quitter**, place le nouveau `PCTime.exe` **dans le même dossier** que l'ancien et lance-le. Le démarrage automatique passe tout seul sur `PCTime.exe`, tu peux ensuite supprimer l'ancien `TempsPC.exe`. Les données sont conservées.
 
 ## Données et vie privée
 
@@ -46,6 +48,7 @@ Copies de sécurité automatiques dans `%APPDATA%\TempsPC\sauvegardes` : une par
 
 ## Versions
 
+- **1.4** : nouveau nom, **PC Time** (anciennement Temps PC). Données et réglages conservés.
 - **1.3** : 6 langues (anglais, chinois, hindi, espagnol, arabe, français), bouton de don à 2,50 €.
 - **1.2** : français / anglais, bouton « Offre-moi un café ».
 - **1.1** : Historique avec histogrammes (12 derniers mois et mois jour par jour), copies de sécurité automatiques, fenêtres adaptées aux petits écrans.
@@ -57,7 +60,7 @@ Copies de sécurité automatiques dans `%APPDATA%\TempsPC\sauvegardes` : une par
 
 ## English
 
-Small free Windows app that counts the time you spend on your computer **each day**, like the “screen time” of a phone.
+Small free Windows app that counts the time you spend on your computer **each day**, like the “screen time” of a phone. (Formerly “Temps PC”.)
 
 Only **active** time counts: after a few minutes without mouse or keyboard, the counter pauses and removes those idle minutes. Sleep time is not counted either.
 
@@ -79,13 +82,13 @@ Only **active** time counts: after a few minutes without mouse or keyboard, the 
 
 ### Install
 
-1. **[Download TempsPC.zip](https://github.com/vincentschoebrechts-beep/temps-pc/raw/main/telechargement/TempsPC.zip)** (Windows 10/11, 64-bit, about 10 MB).
-2. Right-click the zip → **Extract All…**, then put the `TempsPC` folder where it will stay (e.g. Documents).
-3. Double-click `TempsPC.exe`. Nothing else to install.
+1. **[Download PCTime.zip](https://github.com/vincentschoebrechts-beep/temps-pc/raw/main/telechargement/PCTime.zip)** (Windows 10/11, 64-bit, about 10 MB).
+2. Right-click the zip → **Extract All…**, then put the `PCTime` folder where it will stay (e.g. Documents).
+3. Double-click `PCTime.exe`. Nothing else to install.
 
 The exe is not signed: Windows may show “Windows protected your PC”. Click **More info**, then **Run anyway**.
 
-**Update:** in Temps PC, click **Quit**, replace the old `TempsPC.exe` with the new one **in the same place** (to keep automatic startup), then start it again. Your data is kept.
+**Update (also from Temps PC):** in the app, click **Quit**, put the new `PCTime.exe` **in the same folder** as the old one and start it. Automatic startup switches to `PCTime.exe` by itself; you can then delete the old `TempsPC.exe`. Your data is kept.
 
 ### Data and privacy
 
@@ -97,7 +100,7 @@ Automatic backups in `%APPDATA%\TempsPC\sauvegardes`: one per day (the last 14 a
 
 ## Code source / Source code
 
-Avec / with [Python 3](https://www.python.org/downloads/) : double-clic sur / double-click `temps_pc.pyw`. Aucun module à installer / no extra module needed. Fonctionne aussi sur / also runs on macOS and Linux.
+Avec / with [Python 3](https://www.python.org/downloads/) : double-clic sur / double-click `pc_time.pyw`. Aucun module à installer / no extra module needed. Fonctionne aussi sur / also runs on macOS and Linux.
 
 Construire l'exe / build the exe (Windows, Python installé / installed) :
 
@@ -105,4 +108,4 @@ Construire l'exe / build the exe (Windows, Python installé / installed) :
 construction\construire.bat
 ```
 
-Résultat / output : `dist\TempsPC.exe` (PyInstaller, un seul fichier / single file).
+Résultat / output : `dist\PCTime.exe` (PyInstaller, un seul fichier / single file).

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Temps PC - combien de temps je passe sur mon ordinateur, jour par jour.
+PC Time (anciennement « Temps PC ») - combien de temps je passe sur mon ordinateur, jour par jour.
 
 Lancement (Windows) : double-clic sur ce fichier.
 Python 3 doit etre installe : https://www.python.org/downloads/
@@ -41,8 +41,8 @@ import webbrowser
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
-APP_NOM = "Temps PC"
-APP_VERSION = "1.3"
+APP_NOM = "PC Time"
+APP_VERSION = "1.4"
 COPYRIGHT = "© 2026 V. Schoebrechts"
 PAYPAL = "https://paypal.me/VSC1973"
 TICK_MS = 2000        # une mesure toutes les 2 secondes
@@ -98,10 +98,10 @@ TEXTES: dict[str, dict] = {
         "erreur_sauvegarde": "Impossible d'enregistrer les données : {e}",
         "titre_pause": "{d} (en pause)",
         "fichier_illisible": "Le fichier de données n'a pas pu être lu ({e}).\n\nIl a été mis de côté ici :\n{copie}",
-        "info_reduction": "Temps PC continue de compter, réduit dans la barre des tâches.\n\n"
+        "info_reduction": "PC Time continue de compter, réduit dans la barre des tâches.\n\n"
                           "Pour l'arrêter complètement, utilise le bouton « Quitter ».",
-        "confirmer_quitter": "Quitter Temps PC ?\n\nLe temps ne sera plus compté tant que l'application est fermée.",
-        "proposer_demarrage": "Lancer Temps PC automatiquement à chaque démarrage de l'ordinateur ?\n\n"
+        "confirmer_quitter": "Quitter PC Time ?\n\nLe temps ne sera plus compté tant que l'application est fermée.",
+        "proposer_demarrage": "Lancer PC Time automatiquement à chaque démarrage de l'ordinateur ?\n\n"
                               "C'est recommandé : le temps n'est compté que lorsque l'application est ouverte.\n"
                               "(Tu peux changer ça plus tard dans Réglages.)",
         "erreur_demarrage": "Impossible d'activer le démarrage automatique :\n{e}",
@@ -119,7 +119,7 @@ TEXTES: dict[str, dict] = {
                   "sans toucher au PC.",
         "pas_detection": "La détection d'inactivité n'est pas disponible sur ce système : "
                          "tout le temps où l'application est ouverte est compté.",
-        "case_demarrage": "Lancer Temps PC au démarrage de l'ordinateur",
+        "case_demarrage": "Lancer PC Time au démarrage de l'ordinateur",
         "langue_auto": "Automatique ({nom})",
         "donnees_dans": "Données enregistrées dans :",
         "ouvrir_dossier": "Ouvrir le dossier",
@@ -188,10 +188,10 @@ TEXTES: dict[str, dict] = {
         "erreur_sauvegarde": "Could not save the data: {e}",
         "titre_pause": "{d} (paused)",
         "fichier_illisible": "The data file could not be read ({e}).\n\nIt has been set aside here:\n{copie}",
-        "info_reduction": "Temps PC keeps counting, minimized to the taskbar.\n\n"
+        "info_reduction": "PC Time keeps counting, minimized to the taskbar.\n\n"
                           "To stop it completely, use the “Quit” button.",
-        "confirmer_quitter": "Quit Temps PC?\n\nTime will not be counted while the app is closed.",
-        "proposer_demarrage": "Start Temps PC automatically every time the computer starts?\n\n"
+        "confirmer_quitter": "Quit PC Time?\n\nTime will not be counted while the app is closed.",
+        "proposer_demarrage": "Start PC Time automatically every time the computer starts?\n\n"
                               "Recommended: time is only counted while the app is open.\n"
                               "(You can change this later in Settings.)",
         "erreur_demarrage": "Could not enable automatic startup:\n{e}",
@@ -209,7 +209,7 @@ TEXTES: dict[str, dict] = {
                   "touching the PC.",
         "pas_detection": "Idle detection is not available on this system: "
                          "all the time the app is open is counted.",
-        "case_demarrage": "Start Temps PC when the computer starts",
+        "case_demarrage": "Start PC Time when the computer starts",
         "langue_auto": "Automatic ({nom})",
         "donnees_dans": "Data saved in:",
         "ouvrir_dossier": "Open folder",
@@ -278,10 +278,10 @@ TEXTES: dict[str, dict] = {
         "erreur_sauvegarde": "No se pudieron guardar los datos: {e}",
         "titre_pause": "{d} (en pausa)",
         "fichier_illisible": "No se pudo leer el archivo de datos ({e}).\n\nSe ha guardado aparte aquí:\n{copie}",
-        "info_reduction": "Temps PC sigue contando, minimizado en la barra de tareas.\n\n"
+        "info_reduction": "PC Time sigue contando, minimizado en la barra de tareas.\n\n"
                           "Para detenerlo por completo, usa el botón «Salir».",
-        "confirmer_quitter": "¿Salir de Temps PC?\n\nEl tiempo no se contará mientras la aplicación esté cerrada.",
-        "proposer_demarrage": "¿Iniciar Temps PC automáticamente cada vez que se encienda el ordenador?\n\n"
+        "confirmer_quitter": "¿Salir de PC Time?\n\nEl tiempo no se contará mientras la aplicación esté cerrada.",
+        "proposer_demarrage": "¿Iniciar PC Time automáticamente cada vez que se encienda el ordenador?\n\n"
                               "Recomendado: el tiempo solo se cuenta mientras la aplicación está abierta.\n"
                               "(Puedes cambiarlo más tarde en Ajustes.)",
         "erreur_demarrage": "No se pudo activar el inicio automático:\n{e}",
@@ -299,7 +299,7 @@ TEXTES: dict[str, dict] = {
                   "sin tocar el PC.",
         "pas_detection": "La detección de inactividad no está disponible en este sistema: se cuenta todo el "
                          "tiempo que la aplicación está abierta.",
-        "case_demarrage": "Iniciar Temps PC al encender el ordenador",
+        "case_demarrage": "Iniciar PC Time al encender el ordenador",
         "langue_auto": "Automático ({nom})",
         "donnees_dans": "Datos guardados en:",
         "ouvrir_dossier": "Abrir la carpeta",
@@ -367,9 +367,9 @@ TEXTES: dict[str, dict] = {
         "erreur_sauvegarde": "无法保存数据：{e}",
         "titre_pause": "{d}（已暂停）",
         "fichier_illisible": "无法读取数据文件（{e}）。\n\n该文件已另存到：\n{copie}",
-        "info_reduction": "Temps PC 会继续计时，已最小化到任务栏。\n\n如需完全停止，请点击“退出”按钮。",
-        "confirmer_quitter": "退出 Temps PC？\n\n应用关闭期间不会计时。",
-        "proposer_demarrage": "每次开机时自动启动 Temps PC？\n\n推荐：只有在应用打开时才会计时。\n"
+        "info_reduction": "PC Time 会继续计时，已最小化到任务栏。\n\n如需完全停止，请点击“退出”按钮。",
+        "confirmer_quitter": "退出 PC Time？\n\n应用关闭期间不会计时。",
+        "proposer_demarrage": "每次开机时自动启动 PC Time？\n\n推荐：只有在应用打开时才会计时。\n"
                               "（以后可以在“设置”中更改。）",
         "erreur_demarrage": "无法启用开机自动启动：\n{e}",
         "export_titre": "导出历史记录",
@@ -384,7 +384,7 @@ TEXTES: dict[str, dict] = {
         "minutes_sans": "分钟无鼠标或键盘操作后",
         "astuce": "提示：如果你也想统计不碰电脑观看电影或视频的时间，请取消勾选此项。",
         "pas_detection": "此系统不支持空闲检测：应用打开期间的所有时间都会被计入。",
-        "case_demarrage": "开机时启动 Temps PC",
+        "case_demarrage": "开机时启动 PC Time",
         "langue_auto": "自动（{nom}）",
         "donnees_dans": "数据保存位置：",
         "ouvrir_dossier": "打开文件夹",
@@ -454,10 +454,10 @@ TEXTES: dict[str, dict] = {
         "erreur_sauvegarde": "डेटा सहेजा नहीं जा सका: {e}",
         "titre_pause": "{d} (रुका हुआ)",
         "fichier_illisible": "डेटा फ़ाइल पढ़ी नहीं जा सकी ({e})।\n\nउसे यहाँ अलग रख दिया गया है:\n{copie}",
-        "info_reduction": "Temps PC टास्कबार में छोटा होकर गिनती जारी रखता है।\n\n"
+        "info_reduction": "PC Time टास्कबार में छोटा होकर गिनती जारी रखता है।\n\n"
                           "इसे पूरी तरह रोकने के लिए “बाहर निकलें” बटन का इस्तेमाल करें।",
-        "confirmer_quitter": "Temps PC से बाहर निकलें?\n\nऐप बंद रहने तक समय नहीं गिना जाएगा।",
-        "proposer_demarrage": "क्या हर बार कंप्यूटर चालू होने पर Temps PC अपने-आप शुरू हो?\n\n"
+        "confirmer_quitter": "PC Time से बाहर निकलें?\n\nऐप बंद रहने तक समय नहीं गिना जाएगा।",
+        "proposer_demarrage": "क्या हर बार कंप्यूटर चालू होने पर PC Time अपने-आप शुरू हो?\n\n"
                               "सुझाया गया: समय सिर्फ़ तभी गिना जाता है जब ऐप खुला हो।\n"
                               "(आप इसे बाद में सेटिंग्स में बदल सकते हैं।)",
         "erreur_demarrage": "अपने-आप शुरू होना चालू नहीं किया जा सका:\n{e}",
@@ -474,7 +474,7 @@ TEXTES: dict[str, dict] = {
         "astuce": "सुझाव: अगर आप पीसी को छुए बिना देखी गई फ़िल्में या वीडियो भी गिनना चाहते हैं, "
                   "तो इसे अनचेक करें।",
         "pas_detection": "इस सिस्टम पर निष्क्रियता पहचान उपलब्ध नहीं है: ऐप खुले रहने का पूरा समय गिना जाता है।",
-        "case_demarrage": "कंप्यूटर चालू होने पर Temps PC शुरू करें",
+        "case_demarrage": "कंप्यूटर चालू होने पर PC Time शुरू करें",
         "langue_auto": "स्वचालित ({nom})",
         "donnees_dans": "डेटा यहाँ सहेजा गया है:",
         "ouvrir_dossier": "फ़ोल्डर खोलें",
@@ -785,6 +785,9 @@ def heure_txt(ts: float) -> str:
     return datetime.fromtimestamp(ts).strftime("%H:%M")
 
 
+# NB : les identifiants internes gardent l'ancien nom « TempsPC » (dossier des donnees,
+# demarrage automatique, instance unique) pour que les installations existantes continuent
+# a fonctionner apres le changement de nom en « PC Time ».
 def dossier_donnees() -> str:
     perso = os.environ.get("TEMPS_PC_DOSSIER")
     if perso:
@@ -1203,7 +1206,7 @@ class Demarrage:
                     return f'"{arg}"'
                 os.makedirs(os.path.dirname(chemin), exist_ok=True)
                 with open(chemin, "w", encoding="utf-8") as f:
-                    f.write("[Desktop Entry]\nType=Application\nName=Temps PC\n"
+                    f.write("[Desktop Entry]\nType=Application\nName=PC Time\n"
                             f"Exec={' '.join(q(a) for a in cmd)}\n"
                             "X-GNOME-Autostart-enabled=true\n")
             elif os.path.exists(chemin):
@@ -1843,7 +1846,7 @@ class Application:
 
     def _exporter(self, parent, jours) -> None:
         chemin = filedialog.asksaveasfilename(parent=parent, title=t("export_titre"),
-                                              defaultextension=".csv", initialfile="temps_pc.csv",
+                                              defaultextension=".csv", initialfile="pc_time.csv",
                                               filetypes=[(t("export_type"), "*.csv")])
         if not chemin:
             return

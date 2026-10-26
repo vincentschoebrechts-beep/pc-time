@@ -5,4 +5,4 @@ dist/
 *.spec
 *.exe
 *.zip
-!telechargement/TempsPC.zip
+!telechargement/PCTime.zip
