@@ -42,9 +42,11 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
 APP_NOM = "PC Time"
-APP_VERSION = "1.4"
+APP_VERSION = "1.5"
 COPYRIGHT = "© 2026 V. Schoebrechts"
 PAYPAL = "https://paypal.me/VSC1973"
+SITE = "greenserver.be"
+URL_MISE_A_JOUR = f"https://{SITE}/update"   # page des nouvelles versions
 TICK_MS = 2000        # une mesure toutes les 2 secondes
 SAUVEGARDE_S = 30     # ecriture sur le disque toutes les 30 secondes
 ECART_MAX_S = 30      # trou plus long entre deux mesures = veille du PC : non compte
@@ -53,6 +55,8 @@ WIN = sys.platform == "win32"
 MAC = sys.platform == "darwin"
 
 SAUVEGARDES_GARDEES = 14
+RAPPEL_CAFE_APRES_S = 3 * 3600     # premier rappel « cafe » apres 3 h d'utilisation au total
+RAPPEL_CAFE_TOUS_LES_JOURS = 30    # puis une fois par mois (apres « plus tard » comme apres « deja fait »)
 
 # --------------------------------------------------------------------------
 # Textes en francais et en anglais
@@ -95,6 +99,15 @@ TEXTES: dict[str, dict] = {
         "quitter": "Quitter",
         "note": "Fermer la fenêtre la réduit, le suivi continue. « Quitter » arrête tout.",
         "cafe": "☕ Offre-moi un café via PayPal",
+        "rappel_texte": "PC Time est gratuit. Un café pour soutenir ?",
+        "rappel_offrir": "Offrir un café",
+        "rappel_deja": "C'est déjà fait ✓",
+        "rappel_plus_tard": "Me le rappeler dans un mois",
+        "cafe_merci": "☕ Merci pour ton soutien !",
+        "maj": "Mise à jour",
+        "maj_bulle": "Voir s'il existe une nouvelle version sur {site}",
+        "maj_chercher": "Rechercher une mise à jour",
+        "version": "Version {v}",
         "erreur_sauvegarde": "Impossible d'enregistrer les données : {e}",
         "titre_pause": "{d} (en pause)",
         "fichier_illisible": "Le fichier de données n'a pas pu être lu ({e}).\n\nIl a été mis de côté ici :\n{copie}",
@@ -185,6 +198,15 @@ TEXTES: dict[str, dict] = {
         "quitter": "Quit",
         "note": "Closing the window just minimizes it. “Quit” stops tracking.",
         "cafe": "☕ Buy me a coffee via PayPal",
+        "rappel_texte": "PC Time is free. A coffee to support it?",
+        "rappel_offrir": "Buy a coffee",
+        "rappel_deja": "Already done ✓",
+        "rappel_plus_tard": "Remind me in a month",
+        "cafe_merci": "☕ Thanks for your support!",
+        "maj": "Update",
+        "maj_bulle": "Check for a new version on {site}",
+        "maj_chercher": "Check for updates",
+        "version": "Version {v}",
         "erreur_sauvegarde": "Could not save the data: {e}",
         "titre_pause": "{d} (paused)",
         "fichier_illisible": "The data file could not be read ({e}).\n\nIt has been set aside here:\n{copie}",
@@ -275,6 +297,15 @@ TEXTES: dict[str, dict] = {
         "quitter": "Salir",
         "note": "Cerrar la ventana solo la minimiza. «Salir» detiene el seguimiento.",
         "cafe": "☕ Invítame a un café con PayPal",
+        "rappel_texte": "PC Time es gratis. ¿Un café para apoyarlo?",
+        "rappel_offrir": "Invitar a un café",
+        "rappel_deja": "Ya lo hice ✓",
+        "rappel_plus_tard": "Recordármelo en un mes",
+        "cafe_merci": "☕ ¡Gracias por tu apoyo!",
+        "maj": "Actualizar",
+        "maj_bulle": "Ver si hay una versión nueva en {site}",
+        "maj_chercher": "Buscar actualizaciones",
+        "version": "Versión {v}",
         "erreur_sauvegarde": "No se pudieron guardar los datos: {e}",
         "titre_pause": "{d} (en pausa)",
         "fichier_illisible": "No se pudo leer el archivo de datos ({e}).\n\nSe ha guardado aparte aquí:\n{copie}",
@@ -364,6 +395,15 @@ TEXTES: dict[str, dict] = {
         "quitter": "退出",
         "note": "关闭窗口只会将其最小化。点击“退出”才会停止计时。",
         "cafe": "☕ 通过 PayPal 请我喝杯咖啡",
+        "rappel_texte": "PC Time 是免费的。请我喝杯咖啡支持一下？",
+        "rappel_offrir": "请喝咖啡",
+        "rappel_deja": "已经请过了 ✓",
+        "rappel_plus_tard": "一个月后再提醒我",
+        "cafe_merci": "☕ 感谢你的支持！",
+        "maj": "检查更新",
+        "maj_bulle": "在 {site} 查看是否有新版本",
+        "maj_chercher": "检查更新",
+        "version": "版本 {v}",
         "erreur_sauvegarde": "无法保存数据：{e}",
         "titre_pause": "{d}（已暂停）",
         "fichier_illisible": "无法读取数据文件（{e}）。\n\n该文件已另存到：\n{copie}",
@@ -451,6 +491,15 @@ TEXTES: dict[str, dict] = {
         "quitter": "बाहर निकलें",
         "note": "विंडो बंद करने पर वह सिर्फ़ छोटी हो जाती है। “बाहर निकलें” से गिनती रुकती है।",
         "cafe": "☕ PayPal से मुझे एक कॉफ़ी पिलाएँ",
+        "rappel_texte": "PC Time मुफ़्त है। समर्थन के लिए एक कॉफ़ी?",
+        "rappel_offrir": "कॉफ़ी पिलाएँ",
+        "rappel_deja": "पहले ही कर दिया ✓",
+        "rappel_plus_tard": "एक महीने बाद याद दिलाएँ",
+        "cafe_merci": "☕ आपके समर्थन के लिए धन्यवाद!",
+        "maj": "अपडेट",
+        "maj_bulle": "{site} पर नया संस्करण देखें",
+        "maj_chercher": "अपडेट की जाँच करें",
+        "version": "संस्करण {v}",
         "erreur_sauvegarde": "डेटा सहेजा नहीं जा सका: {e}",
         "titre_pause": "{d} (रुका हुआ)",
         "fichier_illisible": "डेटा फ़ाइल पढ़ी नहीं जा सकी ({e})।\n\nउसे यहाँ अलग रख दिया गया है:\n{copie}",
@@ -541,6 +590,15 @@ TEXTES: dict[str, dict] = {
         "quitter": "خروج",
         "note": "إغلاق النافذة يصغّرها فقط. «خروج» يوقف العدّ.",
         "cafe": "ادعمني بفنجان قهوة عبر باي بال ☕",
+        "rappel_texte": "التطبيق مجاني. فنجان قهوة لدعمه؟",
+        "rappel_offrir": "قدّم قهوة",
+        "rappel_deja": "سبق أن فعلت ✓",
+        "rappel_plus_tard": "ذكّرني بعد شهر",
+        "cafe_merci": "شكرًا لدعمك ☕",
+        "maj": "تحديث",
+        "maj_bulle": "ابحث عن إصدار جديد على {site}",
+        "maj_chercher": "البحث عن تحديث",
+        "version": "الإصدار {v}",
         "erreur_sauvegarde": "تعذّر حفظ البيانات: {e}",
         "titre_pause": "{d} (متوقف مؤقتًا)",
         "fichier_illisible": "تعذّرت قراءة ملف البيانات ({e}).\n\nتم وضعه جانبًا هنا:\n{copie}",
@@ -672,6 +730,19 @@ def libelle_montant(montant: float) -> str:
     return f"{v.replace('.', ',')} €" if LANGUE in ("fr", "es") else f"€{v}"
 
 
+def lien_mise_a_jour() -> str:
+    """Page des mises a jour ; la version installee est dans l'adresse, pour que la page puisse
+    dire « tu es a jour » plus tard (rien d'autre n'est envoye, et seulement sur clic)."""
+    return f"{URL_MISE_A_JOUR}?v={APP_VERSION}"
+
+
+def ouvrir_mise_a_jour() -> None:
+    try:
+        webbrowser.open(lien_mise_a_jour())
+    except Exception:
+        pass
+
+
 def ouvrir_paypal(montant: float | None = None) -> None:
     """Page PayPal.me (dans le navigateur), avec le montant deja rempli si on l'a choisi."""
     try:
@@ -752,13 +823,15 @@ THEMES = {
                   barre_actif="#1f9d4a", passee_actif="#6fc28c",
                   barre_pause="#8a8984", passee_pause="#bdbcb6", actif="#1f9d4a",
                   bouton="#ecebe7", bouton_survol="#dfded9", bulle="#262624",
-                  bulle_texte="#fcfcfb", survol_col="#f1f0ec", copyright="#c9c8c2"),
+                  bulle_texte="#fcfcfb", survol_col="#f1f0ec", copyright="#c9c8c2",
+                  rappel_fond="#fdf3d0"),
     "sombre": dict(fond="#1a1a19", carte="#252524", texte="#f0efec", texte2="#c3c2b7",
                    discret="#8f8e86", grille="#2c2c2a", axe="#4a4a47",
                    barre_actif="#34b864", passee_actif="#22703f",
                    barre_pause="#8f8e86", passee_pause="#4a4a47", actif="#34b864",
                    bouton="#2b2b29", bouton_survol="#373734", bulle="#f0efec",
-                   bulle_texte="#1a1a19", survol_col="#242423", copyright="#4a4a46"),
+                   bulle_texte="#1a1a19", survol_col="#242423", copyright="#4a4a46",
+                   rappel_fond="#332d18"),
 }
 
 
@@ -1483,13 +1556,40 @@ def _vers_photo(root: tk.Misc, grille: list[list]) -> tk.PhotoImage:
     return img
 
 
+class InfoBulle:
+    """Petite bulle d'aide qui apparait au survol d'un widget."""
+
+    def __init__(self, widget: tk.Widget, texte: str, app: "Application") -> None:
+        self.widget, self.texte, self.app, self.fen = widget, texte, app, None
+        widget.bind("<Enter>", self._montrer, add="+")
+        widget.bind("<Leave>", self._cacher, add="+")
+
+    def _montrer(self, _e) -> None:
+        if self.fen:
+            return
+        th = self.app.th
+        self.fen = tk.Toplevel(self.widget)
+        self.fen.wm_overrideredirect(True)
+        tk.Label(self.fen, text=self.texte, bg=th["bulle"], fg=th["bulle_texte"], font=(POLICE, 9),
+                 padx=self.app.px(6), pady=self.app.px(3)).pack()
+        self.fen.update_idletasks()
+        x = self.widget.winfo_rootx() + self.widget.winfo_width() - self.fen.winfo_reqwidth()
+        y = self.widget.winfo_rooty() - self.fen.winfo_reqheight() - self.app.px(4)
+        self.fen.wm_geometry(f"+{max(0, x)}+{max(0, y)}")
+
+    def _cacher(self, _e) -> None:
+        if self.fen:
+            self.fen.destroy()
+            self.fen = None
+
+
 class BoutonCafe(tk.Label):
     """Petit bouton jaune « 2 € » qui ouvre PayPal avec ce montant."""
     JAUNE, JAUNE_SURVOL = "#facc15", "#eab308"
 
     def __init__(self, master, montant: float, app: "Application") -> None:
         super().__init__(master, text=libelle_montant(montant), bg=self.JAUNE, fg="#1a1a19",
-                         font=(POLICE, 9, "bold"), padx=app.px(8), pady=app.px(1), cursor="hand2")
+                         font=(POLICE, 9, "bold"), padx=app.px(6), pady=app.px(1), cursor="hand2")
         self.bind("<Enter>", lambda e: self.config(bg=self.JAUNE_SURVOL))
         self.bind("<Leave>", lambda e: self.config(bg=self.JAUNE))
         self.bind("<Button-1>", lambda e: ouvrir_paypal(montant))
@@ -1524,11 +1624,13 @@ class Application:
         th = self.th
         root.title(APP_NOM)
         root.configure(bg=th["fond"])
-        self._dimensionner(root, 520, 712, 440, 670)
+        self._dimensionner(root, 520, 724, 440, 680)
         root.protocol("WM_DELETE_WINDOW", self.reduire)
         self._icones: list[tk.PhotoImage] = []
         self._etat_icone = None
         self.historique: FenetreHistorique | None = None
+        self._rappel_visible = False
+        self._rappel_controle = 0.0
         self._styles_ttk()
         self._construire()
         if THEMES["sombre"] is th:
@@ -1631,24 +1733,125 @@ class Application:
         bas = tk.Frame(cadre, bg=th["fond"])
         bas.pack(side="bottom", fill="x", pady=(px(16), 0))
         # Derniere ligne : « offre-moi un cafe » (PayPal) et le copyright, tout petit
-        pied = tk.Frame(bas, bg=th["fond"])
+        self.pied = pied = tk.Frame(bas, bg=th["fond"])
         pied.pack(side="bottom", fill="x", pady=(px(12), 0))
-        cafe = tk.Label(pied, text=t("cafe"), bg=th["fond"], fg=th["texte2"], font=(POLICE, 9),
-                        cursor="hand2")
+        self.lbl_cafe = cafe = tk.Label(pied, bg=th["fond"], fg=th["texte2"], font=(POLICE, 9), cursor="hand2",
+                                        text=t("cafe_merci") if self._cafe_recent() else t("cafe"))
         cafe.pack(side=debut())
         cafe.bind("<Button-1>", lambda e: ouvrir_paypal())
         for montant in MONTANTS_DON:
-            BoutonCafe(pied, montant, self).pack(side=debut(), padx=marge(px(6), 0))
+            BoutonCafe(pied, montant, self).pack(side=debut(), padx=marge(px(5), 0))
         tk.Label(pied, text=COPYRIGHT, bg=th["fond"], fg=th["copyright"], font=(POLICE, 7)).pack(
             side=fin(), anchor="s")
         self.lbl_note = tk.Label(bas, bg=th["fond"], fg=th["discret"], font=(POLICE, 9),
                                  anchor=ancre_debut(), justify=justif())
         self.lbl_note.pack(side="bottom", fill="x", pady=(px(10), 0))
-        boutons = tk.Frame(bas, bg=th["fond"])
+        self.boutons = boutons = tk.Frame(bas, bg=th["fond"])
         boutons.pack(side="bottom", fill="x")
         Bouton(boutons, t("historique"), self.ouvrir_historique, self).pack(side=debut())
         Bouton(boutons, t("reglages"), self.ouvrir_reglages, self).pack(side=debut(), padx=marge(px(8), 0))
         Bouton(boutons, t("quitter"), self.quitter, self).pack(side=fin())
+        self._construire_rappel(bas)
+
+    def _construire_rappel(self, parent) -> None:
+        """Bandeau « un cafe pour soutenir ? », affiche par _maj_rappel() quand c'est le moment.
+        En haut : la phrase et la croix (« plus tard ») ; en dessous : « Mise a jour » d'un cote,
+        « Offrir un cafe » et « C'est deja fait » de l'autre."""
+        th, px = self.th, self.px
+        fond = th["rappel_fond"]
+        self.rappel = f = tk.Frame(parent, bg=fond, padx=px(10), pady=px(6))
+        haut = tk.Frame(f, bg=fond)
+        haut.pack(fill="x")
+        fermer = tk.Label(haut, text="✕", bg=fond, fg=th["discret"], font=(POLICE, 10), cursor="hand2", padx=px(2))
+        fermer.pack(side=fin(), anchor="n")
+        fermer.bind("<Button-1>", lambda e: self._rappel_plus_tard())
+        InfoBulle(fermer, t("rappel_plus_tard"), self)
+        texte = tk.Label(haut, text=t("rappel_texte"), bg=fond, fg=th["texte"], font=(POLICE, 10),
+                         anchor=ancre_debut(), justify=justif())
+        texte.pack(side=debut(), fill="x", expand=True)
+        haut.bind("<Configure>", lambda e: texte.config(wraplength=max(px(150), e.width - fermer.winfo_reqwidth()
+                                                                       - px(16))))
+        ligne = tk.Frame(f, bg=fond)
+        ligne.pack(fill="x", pady=(px(5), 0))
+        deja = Bouton(ligne, t("rappel_deja"), self._rappel_deja, self)
+        deja.config(font=(POLICE, 9), padx=px(9), pady=px(2))
+        deja.pack(side=fin())
+        offrir = tk.Label(ligne, text=t("rappel_offrir"), bg=BoutonCafe.JAUNE, fg="#1a1a19", font=(POLICE, 9, "bold"),
+                          padx=px(9), pady=px(2), cursor="hand2")
+        offrir.bind("<Enter>", lambda e: offrir.config(bg=BoutonCafe.JAUNE_SURVOL))
+        offrir.bind("<Leave>", lambda e: offrir.config(bg=BoutonCafe.JAUNE))
+        offrir.bind("<Button-1>", lambda e: ouvrir_paypal())
+        offrir.pack(side=fin(), padx=marge(0, px(8)))
+        maj = Bouton(ligne, t("maj"), ouvrir_mise_a_jour, self)
+        maj.config(font=(POLICE, 9), padx=px(9), pady=px(2))
+        maj.pack(side=debut())
+        InfoBulle(maj, t("maj_bulle", site=SITE), self)
+        self.btn_maj_rappel = maj
+
+    def _jours_depuis(self, cle: str):
+        """Nombre de jours depuis la date enregistree dans les reglages (None si aucune)."""
+        try:
+            return (date.today() - date.fromisoformat(self.d.reglages.get(cle) or "")).days
+        except ValueError:
+            return None
+
+    def _cafe_recent(self) -> bool:
+        """« C'est deja fait » clique il y a moins d'un mois : la ligne cafe dit merci."""
+        n = self._jours_depuis("cafe_offert_le")
+        return n is not None and 0 <= n < RAPPEL_CAFE_TOUS_LES_JOURS
+
+    def _rappel_cafe_a_montrer(self) -> bool:
+        """Apres 3 h d'utilisation au total, puis une fois par mois (la croix et « deja fait »
+        le cachent tous les deux pour un mois)."""
+        if sum(sum(j["heures"]) for j in self.d.jours.values()) < RAPPEL_CAFE_APRES_S:
+            return False
+        n = self._jours_depuis("rappel_cafe_masque_le")
+        return n is None or not 0 <= n < RAPPEL_CAFE_TOUS_LES_JOURS
+
+    def _maj_rappel(self, force: bool = False) -> None:
+        """Montre ou cache le bandeau (verifie au plus une fois par minute)."""
+        if not force and time.time() - self._rappel_controle < 60:
+            return
+        self._rappel_controle = time.time()
+        montrer = self._rappel_cafe_a_montrer()
+        if montrer == self._rappel_visible:
+            return
+        self._rappel_visible = montrer
+        self.lbl_cafe.config(text=t("cafe_merci") if self._cafe_recent() else t("cafe"))
+        px = self.px
+        if montrer:   # le bandeau prend la place de la petite note
+            self.lbl_note.pack_forget()
+            self.rappel.pack(side="bottom", fill="x", pady=(0, px(10)), after=self.boutons)
+            self.root.after(100, self._ajuster_hauteur)
+        else:
+            self.rappel.pack_forget()
+            self.lbl_note.pack(side="bottom", fill="x", pady=(px(10), 0), after=self.pied)
+
+    def _ajuster_hauteur(self) -> None:
+        """Agrandit un peu la fenetre si son contenu ne tient pas (bandeau, grandes polices)."""
+        r = self.root
+        try:
+            r.update_idletasks()
+            if not r.winfo_ismapped() or r.state() != "normal":
+                return
+            haut = r.winfo_height()
+            h = min(r.winfo_reqheight(), r.winfo_screenheight() - self.px(90))
+            if h > haut:
+                r.geometry(f"{r.winfo_width()}x{h}")
+        except tk.TclError:
+            pass
+
+    def _rappel_plus_tard(self) -> None:
+        self.d.reglages["rappel_cafe_masque_le"] = date.today().isoformat()
+        self._sauver()
+        self._maj_rappel(force=True)
+
+    def _rappel_deja(self) -> None:
+        aujourd_hui = date.today().isoformat()
+        self.d.reglages["cafe_offert_le"] = aujourd_hui
+        self.d.reglages["rappel_cafe_masque_le"] = aujourd_hui
+        self._sauver()
+        self._maj_rappel(force=True)
 
     def _titre(self, parent, texte: str, sous_titre: str) -> None:
         th, px = self.th, self.px
@@ -1752,6 +1955,7 @@ class Application:
 
         note = self.erreur_sauvegarde or t("note")
         self.lbl_note.config(text=note, fg="#d03b3b" if self.erreur_sauvegarde else th["discret"])
+        self._maj_rappel()
 
         if self.historique:
             try:
@@ -1785,6 +1989,8 @@ class Application:
                 w.destroy()
         self._construire()
         self._etat_icone = None
+        self._rappel_visible = False
+        self._rappel_controle = 0.0
         self.rafraichir()
         if historique_ouvert:
             self.ouvrir_historique()
@@ -1793,6 +1999,7 @@ class Application:
     def montrer(self) -> None:
         self.root.deiconify()
         self.root.lift()
+        self.root.after(100, self._ajuster_hauteur)
         try:
             self.root.attributes("-topmost", True)
             self.root.after(300, lambda: self.root.attributes("-topmost", False))
@@ -1913,6 +2120,17 @@ class Application:
                                                          font=(POLICE, 10), width=24)
         choix_langue.current(codes_langue.index(langue_avant))
         choix_langue.pack(anchor=ancre_debut(), padx=marge(px(20), 0), pady=(px(4), 0))
+
+        # Version installee et page des mises a jour (s'ouvre dans le navigateur)
+        ligne_maj = tk.Frame(cadre, bg=th["fond"])
+        ligne_maj.pack(fill="x", pady=(px(18), 0))
+        tk.Label(ligne_maj, text=f"{APP_NOM} – {t('version', v=APP_VERSION)}", bg=th["fond"], fg=th["texte2"],
+                 font=(POLICE, 10)).pack(side=debut())
+        maj = Bouton(ligne_maj, t("maj_chercher"), ouvrir_mise_a_jour, self)
+        maj.config(font=(POLICE, 9), padx=px(9), pady=px(2))
+        maj.pack(side=debut(), padx=marge(px(12), 0))
+        InfoBulle(maj, t("maj_bulle", site=SITE), self)
+        self.btn_maj_reglages = maj
 
         tk.Label(cadre, text=t("donnees_dans"), bg=th["fond"], fg=th["texte2"],
                  font=(POLICE, 10), anchor=ancre_debut()).pack(fill="x", pady=(px(18), 0))
