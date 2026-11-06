@@ -6,3 +6,4 @@ dist/
 *.exe
 *.zip
 !telechargement/PCTime.zip
+!docs/update/PCTime.zip
