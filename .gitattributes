@@ -2,4 +2,3 @@
 *.pyw text eol=lf
 *.ico binary
 *.png binary
-docs/files/data/*.bin binary
